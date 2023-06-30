@@ -1,5 +1,5 @@
-#ifndef MESH_HPP
-#define MESH_HPP
+//#ifndef MESH_HPP
+//#define MESH_HPP
 
 #include "mesh.h"
 #include "math.h"
@@ -403,6 +403,5 @@ void Mesh::compute_normals()
 
 }
 
-
-
-#endif
+//
+//#endif

@@ -1,5 +1,5 @@
-#ifndef VERTEX_HPP
-#define VERTEX_HPP
+//#ifndef VERTEX_HPP
+//#define VERTEX_HPP
 #include "vertex.h"
 
 Vertex::Vertex(const vec3& v, const vec3& normal, const vec3& color)
@@ -145,5 +145,5 @@ bool Face::Comparator::operator () (const MeshElem* F1, const MeshElem* F2)  con
 }
 
 
-#endif
+//#endif
 

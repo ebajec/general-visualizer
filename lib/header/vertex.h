@@ -53,8 +53,8 @@ public:
 	void connect(Vertex* arg, Args... args);
 	template<typename... Args>
 	void disconnect(Vertex* arg, Args... args);
-	template<typename func>
-	void transform(func f);
+	//template<typename func>
+	//void transform(func f);
 
 	size_t deg() { return degree; }
 

@@ -53,7 +53,7 @@ int main() {
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
-	Shader myShader("camera_projection.glsl", "frag.glsl");
+	Shader myShader("lib/shader/camera_projection.glsl", "lib/shader/frag.glsl");
 
 	auto penisify = [](vec3 v) {
 		float x, y, z;
@@ -67,7 +67,7 @@ int main() {
 		z = z / r;*/
 
 		//transform
-		return vec3{ x + 0.01f * sin(y), y - 0.01f * sin(x),z };
+		return vec3{ x + 0.03f * sin(y), y - 0.03f * sin(x),z + 0.02f * sin(x * y) };
 	};
 
 	auto smooth = [](Vertex* v) {
@@ -102,7 +102,7 @@ int main() {
 		myShader.use();
 		cam.connect_uniforms(myShader);
 
-		//ball1.transform_geometry(R);
+		ball1.transform_geometry(R);
 		ball1.transform_buffer(POSITION, penisify);
 
 		ball1.draw();
