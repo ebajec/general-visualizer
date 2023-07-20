@@ -20,25 +20,29 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lib\header\camera.h" />
-    <ClInclude Include="lib\header\lattice.h" />
+    <ClInclude Include="lib\header\drawable.h" />
+    <ClInclude Include="lib\header\point_cloud.h" />
+    <ClInclude Include="lib\header\shapes.h" />
     <ClInclude Include="lib\header\linked_list.h" />
     <ClInclude Include="lib\header\mesh.h" />
     <ClInclude Include="lib\header\shader.h" />
     <ClInclude Include="lib\header\vertex.h" />
     <ClCompile Include="lib\source\linked_list.hpp" />
-    <ClCompile Include="lib\source\mesh.cpp" />
+    <ClInclude Include="lib\source\mesh.hpp" />
     <ClCompile Include="lib\source\vertex.cpp" />
+    <ClInclude Include="lib\source\drawable.hpp" />
+    <ClInclude Include="lib\source\point_cloud.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\module\misc.ixx" />
     <ClCompile Include="lib\source\camera.cpp" />
-    <ClCompile Include="lib\source\lattice.cpp" />
+    <ClCompile Include="lib\source\shapes.cpp" />
     <ClCompile Include="lib\source\main.cpp" />
     <ClCompile Include="lib\source\misc.cpp" />
     <ClCompile Include="lib\source\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="lib\shader\camera_projection.glsl" />
+    <None Include="lib\shader\vertex.glsl" />
     <None Include="lib\shader\compute_face_normals.glsl" />
     <None Include="lib\shader\frag.glsl" />
   </ItemGroup>

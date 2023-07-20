@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #define MAX_LINE_LENGTH 100
 
@@ -115,7 +116,26 @@ void Shader::compile_shader(GLenum type, const char* source)
 	GLuint s = glCreateShader(type);
 	glShaderSource(s, 1, &source, NULL);
 	glCompileShader(s);
-	glAttachShader(program, s);
+
+	GLint success = 0;
+	glGetShaderiv(s, GL_COMPILE_STATUS, &success);
+
+	if (success == GL_FALSE) {
+		GLint length = 0;
+		glGetShaderiv(s, GL_INFO_LOG_LENGTH, &length);
+
+		std::vector<GLchar> error_message(length);
+		glGetShaderInfoLog(s, length, NULL, &error_message[0]);
+
+		printf(&error_message[0]);
+
+		glDeleteShader(s);
+	}
+	else {
+		glAttachShader(program, s);
+	}
+
+
 }
 
 ComputeShader::ComputeShader(const char* shader_path) {

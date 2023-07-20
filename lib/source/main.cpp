@@ -6,23 +6,27 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <complex>
 #include "matrix.hpp"
 #include "shader.h"
 #include "camera.h"
 #include "mesh.h"
-#include "lattice.h"
+#include "shapes.h"
+#include "point_cloud.h"
 
 import misc;
 
 #ifndef PI
-#define PI 3.141592654f;
+#define PI 3.141592654f
 #endif
 
 using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 
-camera cam(vec3({ 0,-0.2,-1 }), vec3({ 0,2,30 }), PI / 3);
+#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 1080
 
+float t = 0;
 
 int main() {
 	// start GL context and O/S window using the GLFW helper library
@@ -31,7 +35,7 @@ int main() {
 		return 1;
 	}
 
-	GLFWwindow* window = glfwCreateWindow(1000, 1000, "test", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "test", NULL, NULL);
 	if (!window) {
 		fprintf(stderr, "ERROR: could not open window with GLFW3\n");
 		glfwTerminate();
@@ -53,61 +57,73 @@ int main() {
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
-	Shader myShader("lib/shader/camera_projection.glsl", "lib/shader/frag.glsl");
+	Shader meshShader("lib/shader/vertex.glsl", "lib/shader/frag.glsl");
 
-	auto penisify = [](vec3 v) {
-		float x, y, z;
-		x = v[0][0]; y = v[1][0]; z = v[2][0];
+	camera cam(vec3({ 0,-0.5,1 }), vec3({ 0,3,-10 }), PI / 3);
 
-		float r = sqrt(x * x + y * y + z * z);
 
-		//normalize
-		/*x = x / r;
-		y = y / r;
-		z = z / r;*/
-
-		//transform
-		return vec3{ x + 0.03f * sin(y), y - 0.03f * sin(x),z + 0.02f * sin(x * y) };
+	auto torus = [=](float s, float t) {
+		float r = 0.75f;
+		float R = 3.0f;
+		return R * vec3{ sin(s) * cos(t),sin(s) * sin(t), cos(s) };
+		/*vec3{ cos(s) * (R + r * cos(t)), sin(s) * (R + r * cos(t)), r * sin(t) };*/
 	};
 
-	auto smooth = [](Vertex* v) {
-		vec3 temp = v->position;
-		float x, y, z;
-		x = temp[0][0]; y = temp[1][0]; z = temp[2][0];
+	auto boys = [=](float tf, float rf) {
 
-		float r = sqrt(x * x + y * y + z * z);
+		std::complex<double> w = (double)tf * exp((double)rf * 1i);
+		double rt5 = sqrt(5);
 
-		//normalize
-		x = x / r;
-		y = y / r;
-		z = z / r;
+		std::complex<double> g_1 = -3.0f / 2.0f *
+			imag(
+				w * (1.0 - pow(w, 4)) /
+				(pow(w, 6) + rt5 * pow(w, 3) - 1.0)
+			);
+		std::complex<double> g_2 = -3.0f / 2.0f * real(
+			w * (1.0 + pow(w, 4)) /
+			(pow(w, 6) + rt5 * pow(w, 3) - 1.0)
+		);
+		std::complex<double> g_3 = imag(
+			(1.0 + pow(w, 6)) /
+			(pow(w, 6) + rt5 * pow(w, 3) - 1.0)
+		) - 0.5;
 
-		//transform
-		v->position = 5 * vec3{ x, y, z };
+		matrix<3, 1, std::complex<double>> v = { g_1,g_2,g_3 };
+		v = (1.0 / (g_1 * g_1 + g_2 * g_2 + g_3 * g_3)) * v;
+
+		return vec3{
+			(float)real(*v[0]),
+			(float)real(*v[1]),
+			(float)real(*v[2]) };
 	};
 
-	Mesh ball1(generate_polygon(15));
-	ball1.center();
-	ball1.transform_vertices(smooth);
-	ball1.compute_normals();
-	ball1.color_with_curvature();
-	ball1.initialize_buffers(GL_STREAM_DRAW, TRIANGLE);
-	ball1.transform_geometry(rotateyz<GLfloat>(PI / 2));
+	mesh torus_model(surface(torus, PI, 2 * PI), 40, 4);
+	torus_model.set_type(LINE);
+	torus_model.init_buffers(GL_STREAM_DRAW);
+	torus_model.transform(mat4{
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+		});
+	//torus_model.set_mode(GL_POINTS);
+	//torus_model.transform(rotateyz<GLfloat>(-PI / 2));
 
-	mat3 R = rotatexz<GLfloat>(PI / 128);
+	mat3 R = rotatexz<GLfloat>(PI / 1024);// *rotateyz<GLfloat>(PI / 512)* rotatexy<GLfloat>(PI / 1024);
 
 	while (!glfwWindowShouldClose(window)) {
 		//set up shaders
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		myShader.use();
-		cam.connect_uniforms(myShader);
 
-		ball1.transform_geometry(R);
-		ball1.transform_buffer(POSITION, penisify);
+		meshShader.use();
+		cam.connect_uniforms(meshShader);
 
-		ball1.draw();
+		torus_model.draw(meshShader);
+		torus_model.transform(R);
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
+		//cam.update();
 	}
 
 	// close GL context and any other GLFW resources

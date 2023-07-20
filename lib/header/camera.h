@@ -7,38 +7,52 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+
 using vec3 = matrix<3, 1, GLfloat>;
 using vec4 = matrix<4, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 using mat4 = matrix<4, 4, GLfloat>;
 
 struct camera {
-
-	vec3 position;
-	GLfloat near_dist;
-	GLfloat far_dist;
-	vec3 basis[3];
-	mat3 change_of_basis;
-	mat4 projection_matrix_2D;
-
+public:
 	camera() { this->near_dist = 0; this->far_dist = 0; }
 
-	camera(vec3 normal, vec3 pos, GLfloat focus = 1, GLfloat far = 100);
+	camera(
+		vec3 normal,
+		vec3 pos,
+		GLfloat focus = 1,
+		GLfloat far = 100,
+		int w_screen = 1920,
+		int h_screen = 1080
+	);
 
 	void connect_uniforms(const Shader& shader);
 
-	//void rotate(GLfloat pitch, GLfloat yaw) {
+	void set_velocity(vec3 v) {
+		velocity = v;
+	}
+	void update() {
+		*position[2] = *position[2] / 1.001f;
+		view_mat = (
+			change_of_basis |
+			-1 * (change_of_basis * (position - basis[2] * near_dist))).transpose() |
+			vec4(0.0f);
+	}
 
-	//	mat3 rotation = rotatex<GLfloat, GLfloat>(-yaw)* rot_axis(this->basis[1], pitch);
+private:
+	int _w_screen;
+	int _h_screen;
 
-	//	for (int i = 0; i < 3; i++) {
-	//		basis[i] = rotation * basis[i];
-	//	}
+	vec3 velocity;
 
-	//	//this makes it so the focal point serves as the 'joint' for rotation
-	//	this->pos = focal_point + planenorm * focal_dist;
-	//	this->cam_plane = hyperplane<R3>(planenorm);
-	//}
+	GLfloat near_dist;
+	GLfloat far_dist;
+	vec3 position;
+	vec3 basis[3];
+	mat3 change_of_basis;
+	mat4 model_mat;
+	mat4 view_mat;
+	mat4 projection_2D;
 };
 
 #endif

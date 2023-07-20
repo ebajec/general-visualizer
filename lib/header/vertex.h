@@ -5,11 +5,9 @@
 #include "linked_list.h"
 #include <unordered_set>
 #include <GL/glew.h>
-#define ATTRIBUTES 4
+#define VERTEX_ATTRIBUTES 4
 
 import misc;
-
-enum ShapeType { LINE = 2, TRIANGLE = 3 };
 
 enum VERTEX_ATTRIBUTE {
 	POSITION,
@@ -21,38 +19,38 @@ enum VERTEX_ATTRIBUTE {
 //Vertex
 using vec3 = matrix<3, 1, GLfloat>;
 
-struct Vertex;
-struct MeshElem;
-struct Edge;
-struct Face;
+struct vertex;
+struct mesh_elem;
+struct edge;
+struct face;
 
-struct Vertex {
+struct vertex {
 public:
 
 	struct comparator {
-		bool operator () (const Vertex* v1, const Vertex* v2) const;
+		bool operator () (const vertex* v1, const vertex* v2) const;
 	};
 
 	struct hasher {
-		size_t operator ()(const Vertex* v) const;
+		size_t operator ()(const vertex* v) const;
 	};
 
 	vec3 position;
 	vec3 normal;
 	vec3 color = { 1.0f,1.0f,1.0f };
-	unordered_set<Vertex*> connections;
-	unordered_set<Face*> adjacent_faces;
+	unordered_set<vertex*> connections;
+	unordered_set<face*> adjacent_faces;
 
-	Vertex() { degree = 0; }
-	Vertex(const vec3& v, const vec3& normal, const vec3& color = { 1.0f,1.0f,1.0f });
-	~Vertex();
+	vertex() { degree = 0; }
+	vertex(const vec3& v, const vec3& normal, const vec3& color = { 1.0f,1.0f,1.0f });
+	~vertex();
 
-	void connect(Vertex* other);
-	void disconnect(Vertex* other);
+	void connect(vertex* other);
+	void disconnect(vertex* other);
 	template<typename... Args>
-	void connect(Vertex* arg, Args... args);
+	void connect(vertex* arg, Args... args);
 	template<typename... Args>
-	void disconnect(Vertex* arg, Args... args);
+	void disconnect(vertex* arg, Args... args);
 	//template<typename func>
 	//void transform(func f);
 
@@ -67,38 +65,38 @@ private:
 //Mesh elements
 using mat3 = matrix<3, 3, GLfloat>;
 
-struct MeshElem {
+struct mesh_elem {
 
 public:
 	struct BaseHasher {
-		virtual size_t operator () (const MeshElem* E) const = 0;
+		virtual size_t operator () (const mesh_elem* E) const = 0;
 	};
 	struct BaseComparator {
-		virtual bool operator () (const MeshElem* E1, const MeshElem* E2) const = 0;
+		virtual bool operator () (const mesh_elem* E1, const mesh_elem* E2) const = 0;
 	};
 
-	vector<Vertex*> vertex_array() const { return _vertices; }
-	Vertex* get(int index) const { return _vertices[index]; }
+	vector<vertex*> vertex_array() const { return _vertices; }
+	vertex* get(int index) const { return _vertices[index]; }
 	int size() const { return _size; }
-	Vertex** data() const { return (Vertex**)_vertices.data(); }
+	vertex** data() const { return (vertex**)_vertices.data(); }
 
 protected:
 	int _size;
-	vector<Vertex*> _vertices;
+	vector<vertex*> _vertices;
 };
 
 /* Stores connectivity data for an edge
 */
-struct Edge : public MeshElem {
+struct edge : public mesh_elem {
 public:
-	Edge() { init(); }
-	Edge(Vertex* first, Vertex* second);
+	edge() { init(); }
+	edge(vertex* first, vertex* second);
 
 	struct Hasher : public BaseHasher {
-		size_t operator () (const MeshElem* E) const;
+		size_t operator () (const mesh_elem* E) const;
 	};
 	struct Comparator : public BaseComparator {
-		bool operator () (const MeshElem* E1, const MeshElem* E2) const;
+		bool operator () (const mesh_elem* E1, const mesh_elem* E2) const;
 	};
 private:
 	void init();
@@ -106,17 +104,17 @@ private:
 
 
 /*Stores connectivity data for a face. */
-struct Face : public MeshElem {
-	Face() { _size = 0; }
+struct face : public mesh_elem {
+	face() { _size = 0; }
 
-	Face(std::initializer_list<Vertex*> args);
+	face(std::initializer_list<vertex*> args);
 
 	struct Hasher : public BaseHasher {
-		size_t operator () (const MeshElem* F) const;
+		size_t operator () (const mesh_elem* F) const;
 	};
 
 	struct Comparator : public BaseComparator {
-		bool operator () (const MeshElem* F1, const MeshElem* F2) const;
+		bool operator () (const mesh_elem* F1, const mesh_elem* F2) const;
 	};
 
 	void compute_normal() {
@@ -125,24 +123,24 @@ struct Face : public MeshElem {
 		normal = cross(v1, v2);
 	}
 
-	vector<Edge> adjacent_edges;
+	vector<edge> adjacent_edges;
 	vec3 normal = { 0,0,0 };
 };
 
 template<typename func>
-void bfs(Vertex* start, func s) {
-	linked_list<Vertex> queue;
-	unordered_set<Vertex*> visited;
+void bfs(vertex* start, func s) {
+	linked_list<vertex> queue;
+	unordered_set<vertex*> visited;
 
 	queue.push(start);
 	visited.insert(start);
 
 	while (queue.head != nullptr) {
-		Vertex* dequeued = (Vertex*)queue.pop();
+		vertex* dequeued = (vertex*)queue.pop();
 		s(dequeued);
 
 		//Mark connections as visited and add unvisited to queue
-		for (Vertex* v : dequeued->connections) {
+		for (vertex* v : dequeued->connections) {
 
 			//Only queue the vertex if insert() returns true for new element insertion
 			bool new_insertion = visited.insert(v).second;
@@ -156,14 +154,14 @@ void bfs(Vertex* start, func s) {
 }
 
 template<typename ...Args>
-void Vertex::connect(Vertex* arg, Args ...args)
+void vertex::connect(vertex* arg, Args ...args)
 {
 	connect(arg);
 	connect(args...);
 }
 
 template<typename ...Args>
-void Vertex::disconnect(Vertex* arg, Args ...args)
+void vertex::disconnect(vertex* arg, Args ...args)
 {
 	disconnect(arg);
 	disconnect(args...);

@@ -4,75 +4,62 @@
 
 #include <initializer_list>
 #include <vector>
+#include <map>
 #include <GL/glew.h>
+#include "drawable.h"
 #include "vertex.h"
-#include "GL/glew.h"
 #include "matrix.hpp"
+#include "shapes.h"
 
-void center(Vertex* start);
-vec3 centroid(Vertex* start);
+void center(vertex* start);
+vec3 centroid(vertex* start);
 
-class Mesh {
+enum ShapeType { LINE = 2, TRIANGLE = 3 };
+
+class mesh : public drawable<VERTEX_ATTRIBUTES> {
 
 public:
-	Mesh();
+	mesh();
 	template<int n>
-	Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices);
-	Mesh(Vertex* vertex);
+	mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices);
+	mesh(vertex* vertex, bool center_vertices = true);
+	template<typename paramFunc>
+	mesh(surface<paramFunc> S, int N_s, int N_t);
 
-	~Mesh();
+	~mesh();
 
-	void initialize_buffers(GLenum usage, ShapeType type);
-	void update_buffer(VERTEX_ATTRIBUTE attribute);
+	void init_buffers(GLenum usage);
+	void reinit_buffer(GLenum usage, unsigned int attribute);
 	void center();
-	void draw();
 	void color_with_curvature();
 	void compute_normals();
+	void set_type(ShapeType type);
 
-	void transform_geometry(mat3 A);
-	void transform_buffer(int buffer, mat3 A);
-	template<typename func> void transform_buffer(int buffer, func F);
+	// F must be a lambda taking in an argument the size of each object in the buffer
+	template<typename func> void transform_buffer(VERTEX_ATTRIBUTE attribute, func F);
+
+	//F must be a lamda taking in a pointer to a vertex
 	template<typename func> void transform_vertices(func F);
 
-	unsigned int face_count() { return this->_face_list.size(); }
-	size_t buffer_size(int index) { return this->_buffer_sizes[index]; }
+protected:
+	vector<vertex*> _vertex_list;
+	list<face*> _face_list;
+	list<edge*> _edge_list;
 
-
-private:
-	vector<Vertex*> _vertex_list;
-	list<Face*> _face_list;
-	list<Edge*> _edge_list;
-
-	size_t _buffer_sizes[ATTRIBUTES];
-	GLuint vao;
-	GLuint vbos[ATTRIBUTES];
+	map<face*, int> _face_indices;
 	GLuint face_normal_buffer;
 	GLuint position_storage_buffer;
 
-	unsigned int _num_vertices = 0;
-	unsigned int _draw_mode = NULL;
+	ShapeType _type = TRIANGLE;
 
 	void _init();
+	unsigned long _object_count();
 	void _find_faces_triangular();
 	void _find_edges();
+	void _copy_attributes(float** attribute_buffers);
+	//void _copy_attribute(vertex* v, float* mem, int offset, unsigned int attribute);
 };
 
-
-
-template<typename func>
-void Mesh::transform_buffer(int buffer, func F) {
-	float* mem;
-	glBindBuffer(GL_ARRAY_BUFFER, (vbos)[buffer]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _buffer_sizes[buffer] * sizeof(float), GL_MAP_WRITE_BIT);
-	transform_pts_3<func>(mem, _buffer_sizes[buffer] / 3, F);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-}
-
-template<typename func>
-void Mesh::transform_vertices(func F) {
-	for (Vertex* v : this->_vertex_list) {
-		F(v);
-	}
-}
+#include "mesh.hpp"
 
 #endif

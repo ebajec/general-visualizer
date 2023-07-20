@@ -21,7 +21,7 @@
     <ClInclude Include="lib\header\camera.h">
       <Filter>lib\header</Filter>
     </ClInclude>
-    <ClInclude Include="lib\header\lattice.h">
+    <ClInclude Include="lib\header\shapes.h">
       <Filter>lib\header</Filter>
     </ClInclude>
     <ClInclude Include="lib\header\linked_list.h">
@@ -36,12 +36,27 @@
     <ClInclude Include="lib\header\vertex.h">
       <Filter>lib\header</Filter>
     </ClInclude>
+    <ClInclude Include="lib\header\drawable.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\mesh.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\drawable.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\point_cloud.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\point_cloud.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\source\camera.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="lib\source\lattice.cpp">
+    <ClCompile Include="lib\source\shapes.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
     <ClCompile Include="lib\source\main.cpp">
@@ -56,9 +71,6 @@
     <ClCompile Include="lib\module\misc.ixx">
       <Filter>lib\module</Filter>
     </ClCompile>
-    <ClCompile Include="lib\source\mesh.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
     <ClCompile Include="lib\source\vertex.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
@@ -67,7 +79,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="lib\shader\camera_projection.glsl">
+    <None Include="lib\shader\vertex.glsl">
       <Filter>lib\shader</Filter>
     </None>
     <None Include="lib\shader\compute_face_normals.glsl">

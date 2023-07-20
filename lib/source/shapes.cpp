@@ -1,27 +1,25 @@
-#include "lattice.h"
+#include "shapes.h"
 #include <iostream>
 
+import misc;
 
-int modulo(int dividend, int divisor) {
-	return (dividend % divisor + divisor) % divisor;
-}
 
-Vertex** generate_lattice(int N, int L) {
+vertex** generate_lattice(int N, int L) {
 
-	Vertex** layers = new Vertex * [L];
+	vertex** layers = new vertex * [L];
 	mat3 R = rotatexy<GLfloat>(2 * PI / N);
 	vec3 start_position = { 1,0,0 };
 	//direction of first edge in a layer.
 	vec3 start_angle = (R ^ 2) * start_position;
 
 	//set up origin
-	layers[0] = new Vertex({ 0,0,0 }, { 0,0,1 });
+	layers[0] = new vertex({ 0,0,0 }, { 0,0,1 });
 
 	//make the position of the first vertex in each layer sit on x-axis
 	for (int n = 1; n < L + 1; n++) {
-		layers[n] = new Vertex[N * n];
+		layers[n] = new vertex[N * n];
 		for (int i = 0; i < N * n; i++) {
-			layers[n][i] = Vertex({ 0,0,0 }, { 0,0,1 });
+			layers[n][i] = vertex({ 0,0,0 }, { 0,0,1 });
 		}
 		layers[n][0].position = layers[n - 1][0].position + start_position;
 	}
@@ -31,8 +29,8 @@ Vertex** generate_lattice(int N, int L) {
 		vec3 edge_dir = start_angle;
 
 		for (int i = 1; i < N * n; i++) {
-			Vertex* point_a = layers[n] + i;
-			Vertex* point_b = layers[n] + i - 1;
+			vertex* point_a = layers[n] + i;
+			vertex* point_b = layers[n] + i - 1;
 			point_a->position = (point_b)->position + edge_dir;
 
 			if (i % n == 0) {
@@ -58,7 +56,7 @@ Vertex** generate_lattice(int N, int L) {
 	//connect subsequent layers
 	for (int n = 1; n < L; n++) {
 		for (int i = 0; i < N * n; i++) {
-			Vertex* point = (layers[n] + i);
+			vertex* point = (layers[n] + i);
 
 			if (i % n == 0) {
 				int c_i = i + i / n;
@@ -82,10 +80,10 @@ Vertex** generate_lattice(int N, int L) {
 	return layers;
 }
 
-Vertex* generate_polygon(int penis) {
+vertex* generate_polygon(int penis) {
 	int N = 6;
-	Vertex** lattice_front = generate_lattice(N, penis);
-	Vertex** lattice_back = generate_lattice(N, penis + 1);
+	vertex** lattice_front = generate_lattice(N, penis);
+	vertex** lattice_back = generate_lattice(N, penis + 1);
 
 	for (int n = 0; n <= penis; n++) {
 		for (int i = 0; i < N * n; i++) {
@@ -99,7 +97,7 @@ Vertex* generate_polygon(int penis) {
 
 	int n = penis;
 	for (int i = 0; i < N * n; i++) {
-		Vertex* point = (lattice_front[n] + i);
+		vertex* point = (lattice_front[n] + i);
 
 		if (i % n == 0) {
 			int c_i = i + i / penis;
@@ -124,18 +122,6 @@ Vertex* generate_polygon(int penis) {
 }
 
 
-//int main() {
-//
-//	std::cout << "Generating...\n\n";
-//
-//	vertex* start = generate_lattice(6, 3);
-//
-//	for (vertex* v : start->connections) {
-//		vec3 p = v->position;
-//		p.print();
-//	}
-//
-//	std::cout << "Done!";
-//	return 0;
-//}
+
+
 
