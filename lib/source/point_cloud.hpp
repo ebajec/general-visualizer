@@ -2,25 +2,25 @@
 #define POINT_CLOUD_HPP
 #include "point_cloud.h"
 
-pointCloud::pointCloud(vector<vec3> points) : drawable<POINT_ATTRIBUTES>() {
+PointCloud::PointCloud(vector<vec3> points) : Drawable<POINT_ATTRIBUTES>() {
 	_init();
 	this->_points = points;
 }
 
 template<typename paramFunc>
-pointCloud::pointCloud(surface<paramFunc> S, int fineness) : drawable<POINT_ATTRIBUTES>()
+PointCloud::PointCloud(Surface<paramFunc> S, int fineness) : Drawable<POINT_ATTRIBUTES>()
 {
 	_init();
-	this->_points = S.gen_points(fineness);
+	this->_points = S.genPoints(fineness);
 }
 
 
-void pointCloud::reinit_buffer(GLenum usage, unsigned int attribute)
+void PointCloud::reinitBuffer(GLenum usage, unsigned int attribute)
 {
 
 }
 
-void pointCloud::_init()
+void PointCloud::_init()
 {
 	_draw_mode = GL_POINTS;
 
@@ -31,12 +31,12 @@ void pointCloud::_init()
 	_primitive_sizes[1] = 3;
 }
 
-unsigned long pointCloud::_object_count()
+unsigned long PointCloud::_object_count()
 {
 	return _points.size();
 }
 
-void pointCloud::_copy_attributes(float** attribute_buffers)
+void PointCloud::_copyAttributes(float** attribute_buffers)
 {
 	int counter = 0;
 	float* color_data = _color.data();

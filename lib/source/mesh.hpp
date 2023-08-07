@@ -7,13 +7,14 @@
 #include <forward_list>
 #include <unordered_set>
 #include <queue>
+#include <functional>
 
 import misc;
 
-vec3 centroid(vertex* start) {
+vec3 centroid(Vertex* start) {
 	int count = 0;
 	vec3 sum = { 0,0,0 };
-	auto add_to_sum = [&](vertex* v) {
+	auto add_to_sum = [&](Vertex* v) {
 		count++;
 		sum = sum + v->position;
 	};
@@ -23,21 +24,21 @@ vec3 centroid(vertex* start) {
 	return sum * (1 / ((float)count));
 }
 
-void center(vertex* start)
+void center(Vertex* start)
 {
 	vec3 c = centroid(start);
 
-	auto move_to_origin = [&](vertex* v) {
+	auto move_to_origin = [&](Vertex* v) {
 
 	};
 
 	bfs(start, move_to_origin);
 }
 
-float discrete_laplacian(vertex* v) {
+float discrete_laplacian(Vertex* v) {
 	vec3 centroid = { 0,0,0 };
 
-	for (vertex* w : v->connections) {
+	for (Vertex* w : v->connections) {
 		centroid = centroid + w->position;
 	}
 
@@ -48,7 +49,7 @@ float discrete_laplacian(vertex* v) {
 	vec3 diff = centroid - vp;
 	float val = 0;
 
-	for (vertex* w : v->connections) {
+	for (Vertex* w : v->connections) {
 		val += dot(diff, w->position - vp);
 	}
 
@@ -59,8 +60,8 @@ vec3 red_blue_hue(float t) {
 	return vec3{ (float)sigmoid(t),0,(float)sigmoid(-t) } + vec3{0, 0, 0};
 }
 
-void mesh::_init() {
-	_vertex_list = vector<vertex*>(0);
+void Mesh::_init() {
+	_vertex_list = vector<Vertex*>(0);
 	_draw_mode = GL_TRIANGLES;
 
 	//define primitive sizes for each vertex buffer and create empty array for each one
@@ -74,23 +75,23 @@ void mesh::_init() {
 	}
 }
 
-mesh::mesh() : drawable<VERTEX_ATTRIBUTES>() {
+Mesh::Mesh() : Drawable<VERTEX_ATTRIBUTES>() {
 	_init();
 }
 
-mesh::mesh(vertex* v_start, bool center_vertices) : drawable<VERTEX_ATTRIBUTES>() {
+Mesh::Mesh(Vertex* v_start, bool center_vertices) : Drawable<VERTEX_ATTRIBUTES>() {
 	_init();
-	vector<vertex*> temp_list;
-	auto add_to_vertices = [&](vertex* v) {
+	vector<Vertex*> temp_list;
+	auto add_to_vertices = [&](Vertex* v) {
 		temp_list.push_back(v);
 	};
 
 	bfs(v_start, add_to_vertices);
 	this->_vertex_list = temp_list;
 
-	this->_find_edges();
-	this->_find_faces_triangular();
-	this->compute_normals();
+	this->_findEdges();
+	this->_findFacesTriangular();
+	this->computeNormals();
 	if (center_vertices) {
 		this->center();
 	}
@@ -98,18 +99,18 @@ mesh::mesh(vertex* v_start, bool center_vertices) : drawable<VERTEX_ATTRIBUTES>(
 
 
 template<int n>
-mesh::mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : drawable<VERTEX_ATTRIBUTES>() {
+Mesh::Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : Drawable<VERTEX_ATTRIBUTES>() {
 	_init();
 
 	if (vertices.size() != n) {
 		throw std::invalid_argument("Adjacency matrix size must match vertex list.");
 	}
 
-	this->_vertex_list = vector<vertex*>(n);
+	this->_vertex_list = vector<Vertex*>(n);
 
 	int i = 0;
 	for (vec3 v : vertices) {
-		this->_vertex_list[i] = new vertex(v, normalize(v));
+		this->_vertex_list[i] = new Vertex(v, normalize(v));
 		i++;
 	}
 
@@ -121,77 +122,114 @@ mesh::mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : drawa
 		}
 	}
 
-	this->_find_edges();
-	this->_find_faces_triangular();
-	this->compute_normals();
+	this->_findEdges();
+	this->_findFacesTriangular();
+	this->computeNormals();
 }
 
+
 template<typename paramFunc>
-mesh::mesh(surface<paramFunc> S, int N_s, int N_t) : drawable<VERTEX_ATTRIBUTES>()
+Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_ATTRIBUTES>()
 {
 	_init();
 
-	float s_max = S.s_max();
-	float t_max = S.t_max();
+	float s_max = S.sMax();
+	float t_max = S.tMax();
 
 	float ds = s_max / N_s;
 	float dt = t_max / N_t;
 
-	int size = N_s * N_t;
+	//number of vertices
+	int size;
 
-	this->_vertex_list = vector<vertex*>(size);
-	for (int i = 0; i < size; i++) {
-		_vertex_list[i] = new vertex({ 0,0,0 }, { 1, 0, 0 });
+	//quotient map
+	std::function<pair<int, int>(int, int)> quot;
+
+	//index converter
+	std::function<int(pair<int, int>)> indexer;
+
+	auto gen_vertices = [&](int size) {
+		_vertex_list = vector<Vertex*>(size);
+		for (Vertex*& v : _vertex_list) v = new Vertex({ 0,0,0 }, { 1, 0, 0 });
+	};
+
+	switch (genus) {
+		//equivalent to sphere
+	case 0:
+		size = (N_s - 1) * N_t + 2; // +2 for bottom point and top point (i.e., infinity)
+		gen_vertices(size);
+		_vertex_list[1]->position = S.eval(s_max, t_max); //top
+
+		quot = [=](int i, int j) {
+			return pair<int, int>(i, modulo(j, N_t));
+		};
+
+		indexer = [=](pair<int, int> ind) {
+			int i = ind.first;
+			return (i == N_s) + (i != N_s) * (i != 0) * (2 + (i - 1) * N_t + ind.second);
+		};
+
+		break;
+
+		//equivalent to torus
+	case 1:
+		size = N_s * N_t;
+		gen_vertices(size);
+
+		quot = [=](int i, int j) {
+			return pair<int, int>((i != N_s) * i, (j != N_t) * j);
+		};
+
+		indexer = [=](pair<int, int> ind) {
+			return ind.first * N_t + ind.second;
+		};
+
+		break;
 	}
 
 	for (int i = 0; i < N_s; i++) {
 		for (int j = 0; j < N_t; j++) {
-			int i_next = modulo(i + 1, N_s);
-			int j_next = modulo(j + 1, N_t);
+			auto current_index = quot(i, j);
 
-			vertex* current = _vertex_list[i * N_t + j];
-			vertex* left = _vertex_list[i_next * N_t + j];
-			vertex* behind = _vertex_list[i * N_t + j_next];
-			vertex* diag = _vertex_list[i_next * N_t + j_next];
+			Vertex* current = _vertex_list[indexer(current_index)];
+			Vertex* next_s = _vertex_list[indexer(quot(i + 1, j))];
+			Vertex* next_t = _vertex_list[indexer(quot(i, j + 1))];
+			Vertex* diag = _vertex_list[indexer(quot(i + 1, j + 1))];
 
-			current->position = S.eval(i * ds, j * dt);
-			current->color = hue((i * ds), 0.5);// (j * dt) * 2 * PI / t_max);
+			float s = current_index.first * ds;
+			float t = current_index.second * dt;
 
-			if (i == N_s - 1) {
-				//current->connect(left);
-				current->connect(behind);
-				current->connect(_vertex_list[(N_s - 1) * N_t + N_t - 2]);
-			}
-			else {
-				current->connect(left);
-				current->connect(behind);
-				current->connect(diag);
-			}
+			current->position = S.eval(s, t);
+			current->color = hue(s, t * 2 * PI / t_max);
+
+			current->connect(next_s);
+			current->connect(next_t);
+			//current->connect(diag);
 		}
 	}
 
-	this->_find_edges();
-	this->_find_faces_triangular();
-	this->compute_normals();
+	this->_findEdges();
+	this->_findFacesTriangular();
+	this->computeNormals();
 }
 
-mesh::~mesh() {
-	for (vertex* v : this->_vertex_list) {
+Mesh::~Mesh() {
+	for (Vertex* v : this->_vertex_list) {
 		delete v;
 	}
-	for (edge* E : this->_edge_list) {
+	for (Edge* E : this->_edge_list) {
 		delete E;
 	}
 }
 
-void mesh::center() {
+void Mesh::center() {
 	vec3 c = centroid(_vertex_list[0]);
-	for (vertex* v : _vertex_list) {
+	for (Vertex* v : _vertex_list) {
 		v->position = v->position - c;
 	}
 }
 
-unsigned long mesh::_object_count() {
+unsigned long Mesh::_objectCount() {
 	switch (_type) {
 	case LINE:
 		return 2 * _edge_list.size();
@@ -202,11 +240,11 @@ unsigned long mesh::_object_count() {
 	}
 }
 
-void mesh::init_buffers(GLenum usage) {
-	this->drawable<VERTEX_ATTRIBUTES>::init_buffers(usage);
+void Mesh::initBuffers(GLenum usage) {
+	this->Drawable<VERTEX_ATTRIBUTES>::initBuffers(usage);
 }
 
-void mesh::reinit_buffer(GLenum usage, unsigned int attribute)
+void Mesh::reinitBuffer(GLenum usage, unsigned int attribute)
 {
 
 	//float* mem = new float[_primitive_sizes[attribute] * _object_count](0);
@@ -241,37 +279,37 @@ void mesh::reinit_buffer(GLenum usage, unsigned int attribute)
 }
 
 template<typename func>
-void mesh::transform_buffer(VERTEX_ATTRIBUTE attribute, func F) {
+void Mesh::transformBuffer(VERTEX_ATTRIBUTE attribute, func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _bufsize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	transform_pts_3<func>(mem, _bufsize(attribute) / 3, F);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
+	transform_pts_3<func>(mem, _bufSize(attribute) / 3, F);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 template<typename func>
-void mesh::transform_vertices(func F) {
-	for (vertex* v : this->_vertex_list) {
+void Mesh::transformVertices(func F) {
+	for (Vertex* v : this->_vertex_list) {
 		F(v);
 	}
 }
 
 const int VEC_ATTR = 3;
-void mesh::_copy_attributes(float** attribute_buffers)
+void Mesh::_copyAttributes(float** attribute_buffers)
 {
 	int counter = 0;
 
 	//copy vertex data to respective memory block before copying to buffer
-	auto copy_attributes = [&](mesh_elem* E) {
-		vector<vertex*> vertices = E->vertex_array();
+	auto copy_attributes = [&](MeshElem* E) {
+		vector<Vertex*> vertices = E->vertexArray();
 
-		for (vertex* v : vertices) {
+		for (Vertex* v : vertices) {
 
 			//copy vec3 data into buffers
 			float* vector_data[VEC_ATTR] = {
 				v->position.data(),
 				v->normal.data(),
-				hue(PI * (float)counter / ((float)3 * _face_list.size()),0).data()
+				v->color.data()//hue(PI * (float)counter / ((float)3 * _face_list.size()),0).data()
 			};
 
 			for (int i = 0; i < VEC_ATTR; i++) {
@@ -288,25 +326,25 @@ void mesh::_copy_attributes(float** attribute_buffers)
 
 	switch (_type) {
 	case LINE:
-		for (edge* E : _edge_list) {
+		for (Edge* E : _edge_list) {
 			copy_attributes(E);
 		}
 		break;
 
 	case TRIANGLE:
-		for (face* F : _face_list) {
+		for (Face* F : _face_list) {
 			copy_attributes(F);
 		}
 		break;
 	}
 }
 
-void mesh::_find_faces_triangular() {
-	auto common_vertices = [](vertex* v, vertex* w) {
-		forward_list<vertex*> common;
+void Mesh::_findFacesTriangular() {
+	auto common_vertices = [](Vertex* v, Vertex* w) {
+		forward_list<Vertex*> common;
 
-		for (vertex* cv : v->connections) {
-			for (vertex* cw : w->connections) {
+		for (Vertex* cv : v->connections) {
+			for (Vertex* cw : w->connections) {
 				if (cv == cw) {
 					common.push_front(cv);
 				}
@@ -315,24 +353,29 @@ void mesh::_find_faces_triangular() {
 		return common;
 	};
 
-	auto find_adjacent_face = [](vertex* v) {
-		vertex* w = *(v->connections.begin());
+	auto find_adjacent_face = [](Vertex* v) {
+		Vertex* w = *(v->connections.begin());
 
-		for (vertex* u : v->connections) {
+		for (Vertex* u : v->connections) {
 			if (u->connections.find(w) != u->connections.end()) {
-				return face({ u,v,w });
+				return Face({ u,v,w });
 			}
 		}
-		return face();
+		return Face();
 	};
 
 	//try to find at least one vertex with an adjacent triangular face
-	auto common = common_vertices(_vertex_list[0], _vertex_list[1]);
-	if (std::distance(common.begin(), common.end()) == 0) {
-		return;
+	int temp = 1;
+	auto common = common_vertices(_vertex_list[0], _vertex_list[temp]);
+
+	while (std::distance(common.begin(), common.end()) == 0) {
+		if (temp == _vertex_list.size()) return;
+
+		common = common_vertices(_vertex_list[0], _vertex_list[temp]);
+		temp++;
 	}
 
-	face* F_0 = new face({ _vertex_list[0], *common.begin() ,_vertex_list[1] });
+	Face* F_0 = new Face({ _vertex_list[0], *common.begin() ,_vertex_list[temp] });
 	{
 		int i = 0;
 		while (F_0->size() == 0) {
@@ -344,30 +387,30 @@ void mesh::_find_faces_triangular() {
 	//throw exception if none exist
 	if (F_0->size() == 0) throw std::exception("mesh is not locally planar");
 
-	unordered_set<edge*, edge::Hasher, edge::Comparator> visited_edges;
+	unordered_set<Edge*, Edge::Hasher, Edge::Comparator> visited_edges;
 
-	queue<face*> face_queue;
+	queue<Face*> face_queue;
 	face_queue.push(F_0);
 	this->_face_list.push_back(F_0);
 
 	while (!face_queue.empty()) {
-		face* F = face_queue.front();
+		Face* F = face_queue.front();
 		face_queue.pop();
 
 		//loop through edges of face
-		for (edge& E : F->adjacent_edges) {
+		for (Edge& E : F->adjacent_edges) {
 			//mark them as visited as we go through;
 			if (visited_edges.find(&E) == visited_edges.end()) {
 				visited_edges.insert(&E);
 
-				vertex* edge_start = E.get(0);
-				vertex* edge_end = E.get(1);
+				Vertex* edge_start = E.get(0);
+				Vertex* edge_end = E.get(1);
 
 				//identify common vertex for endpoints of our edge which is
 				//not already part of F
-				vertex* common = nullptr;
-				forward_list<vertex*> common_list = common_vertices(edge_start, edge_end);
-				for (vertex* v : common_list) {
+				Vertex* common = nullptr;
+				forward_list<Vertex*> common_list = common_vertices(edge_start, edge_end);
+				for (Vertex* v : common_list) {
 					if (!linear_search(F->data(), F->size(), v)) {
 						common = v;
 						break;
@@ -376,7 +419,7 @@ void mesh::_find_faces_triangular() {
 
 				//make new face and add to queue if the previous part succeeds
 				if (common != nullptr) {
-					face* face_new = new face({ edge_start,common,edge_end });
+					Face* face_new = new Face({ edge_start,common,edge_end });
 					this->_face_list.push_back(face_new);
 					face_queue.push(face_new);
 				}
@@ -386,7 +429,7 @@ void mesh::_find_faces_triangular() {
 
 	//this is to save computation time later
 	int i = 0;
-	for (face* F : _face_list) {
+	for (Face* F : _face_list) {
 		_face_indices.insert({ F, i });
 		i++;
 	}
@@ -394,27 +437,33 @@ void mesh::_find_faces_triangular() {
 	return;
 }
 
-void mesh::_find_edges() {
-	vertex* start = _vertex_list[0];
-	linked_list<vertex> queue;
-	unordered_set<vertex*> visited;
+void Mesh::_findEdges() {
+	Vertex* start = _vertex_list[0];
+	queue<Vertex*> queue;
+	unordered_set<Vertex*> visited;
+	unordered_set<Vertex*> prev_dequeued;
 
 	queue.push(start);
 	visited.insert(start);
 
-	while (queue.head != nullptr) {
-		vertex* dequeued = (vertex*)queue.pop();
+	while (!queue.empty()) {
+		Vertex* dequeued = (Vertex*)queue.front();
+		queue.pop();
+		prev_dequeued.insert(dequeued);
 
 		//Mark connections as visited and add unvisited to queue
-		for (vertex* v : dequeued->connections) {
-			edge* E = new edge(v, dequeued);
-			_edge_list.push_back(E);
+		for (Vertex* v : dequeued->connections) {
+			if (prev_dequeued.find(v) == prev_dequeued.end()) {
+				Edge* E = new Edge(v, dequeued);
+				_edge_list.push_back(E);
+			}
 
 			//Only queue the vertex if insert() returns true for new element insertion
 			bool new_insertion = visited.insert(v).second;
 
 			if (new_insertion) {
 				queue.push(v);
+
 			}
 		}
 
@@ -423,21 +472,21 @@ void mesh::_find_edges() {
 
 
 
-void mesh::color_with_curvature() {
-	for (vertex* v : this->_vertex_list) {
+void Mesh::colorCurvature() {
+	for (Vertex* v : this->_vertex_list) {
 		v->color = red_blue_hue(6.0f * discrete_laplacian(v));
 	}
 }
 
-void mesh::compute_normals()
+void Mesh::computeNormals()
 {
-	for (face* F : _face_list) {
-		F->compute_normal();
+	for (Face* F : _face_list) {
+		F->computeNormal();
 	}
 
-	for (vertex* v : _vertex_list) {
+	for (Vertex* v : _vertex_list) {
 		vec3 normal_avg = { 0,0,0 };
-		for (face* F : v->adjacent_faces) {
+		for (Face* F : v->adjacent_faces) {
 			normal_avg = normal_avg + F->normal;
 		}
 		v->normal = normalize(normal_avg);
@@ -447,7 +496,7 @@ void mesh::compute_normals()
 
 }
 
-void mesh::set_type(ShapeType type)
+void Mesh::setType(ShapeType type)
 {
 	this->_type = type;
 

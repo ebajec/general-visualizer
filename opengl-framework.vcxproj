@@ -19,15 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="lib\source\view_window.cpp" />
     <ClInclude Include="lib\header\camera.h" />
     <ClInclude Include="lib\header\drawable.h" />
     <ClInclude Include="lib\header\point_cloud.h" />
     <ClInclude Include="lib\header\shapes.h" />
-    <ClInclude Include="lib\header\linked_list.h" />
     <ClInclude Include="lib\header\mesh.h" />
     <ClInclude Include="lib\header\shader.h" />
     <ClInclude Include="lib\header\vertex.h" />
-    <ClCompile Include="lib\source\linked_list.hpp" />
+    <ClInclude Include="lib\header\view_window.h" />
     <ClInclude Include="lib\source\mesh.hpp" />
     <ClCompile Include="lib\source\vertex.cpp" />
     <ClInclude Include="lib\source\drawable.hpp" />
@@ -145,7 +145,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib\module;$(ProjectDir)lib\shader;$(ProjectDir)lib\source;$(ProjectDir)lib\header;$(ProjectDir)include;C:\Users\Eli The Dingo\source\repos\ebajec\linear-algebra\lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)lib\module;$(ProjectDir)lib\shader;$(ProjectDir)lib\source;$(ProjectDir)lib\header;$(ProjectDir)include;C:\Users\semen\source\repos\linear-algebra\lib</AdditionalIncludeDirectories>
       <EnableModules>true</EnableModules>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>

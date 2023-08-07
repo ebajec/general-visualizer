@@ -24,9 +24,6 @@
     <ClInclude Include="lib\header\shapes.h">
       <Filter>lib\header</Filter>
     </ClInclude>
-    <ClInclude Include="lib\header\linked_list.h">
-      <Filter>lib\header</Filter>
-    </ClInclude>
     <ClInclude Include="lib\header\mesh.h">
       <Filter>lib\header</Filter>
     </ClInclude>
@@ -49,6 +46,9 @@
       <Filter>lib\source</Filter>
     </ClInclude>
     <ClInclude Include="lib\header\point_cloud.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\view_window.h">
       <Filter>lib\header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,7 +74,7 @@
     <ClCompile Include="lib\source\vertex.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="lib\source\linked_list.hpp">
+    <ClCompile Include="lib\source\view_window.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>

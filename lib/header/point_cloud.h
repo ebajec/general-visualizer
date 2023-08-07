@@ -7,22 +7,22 @@
 
 #define POINT_ATTRIBUTES 2
 
-class pointCloud : public drawable<POINT_ATTRIBUTES> {
+class PointCloud : public Drawable<POINT_ATTRIBUTES> {
 public:
-	pointCloud() {}
-	pointCloud(vector<vec3> points);
+	PointCloud() {}
+	PointCloud(vector<vec3> points);
 	template<typename paramFunc>
-	pointCloud(surface<paramFunc> S, int fineness);
+	PointCloud(Surface<paramFunc> S, int fineness);
 
 	void set_color(vec3 color) { _color = color; }
-	void reinit_buffer(GLenum usage, unsigned int attribute);
+	void reinitBuffer(GLenum usage, unsigned int attribute);
 private:
 	vector<vec3> _points;
 	vec3 _color = { 1,1,1 };
 
 	void _init();
 	inline unsigned long _object_count();
-	void _copy_attributes(float** attribute_buffers);
+	void _copyAttributes(float** attribute_buffers);
 };
 
 #include "point_cloud.hpp"

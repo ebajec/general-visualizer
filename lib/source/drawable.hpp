@@ -4,17 +4,17 @@
 #include "drawable.h"
 
 template<unsigned int NUM_ATTRIBUTES>
-void drawable<NUM_ATTRIBUTES>::draw(Shader shader)
+void Drawable<NUM_ATTRIBUTES>::draw(ShaderProgram shader,float t)
 {
 	glUseProgram(shader.program);
-	shader.set_uniform("geom_model", _model, GL_TRUE);
+	shader.setUniform("geom_model", _model, GL_TRUE);
 	glBindVertexArray(_vao);
-	glDrawArrays(_draw_mode, 0, _object_count());
-	shader.set_uniform("geom_model", mat4::id(), GL_FALSE);
+	glDrawArrays(_draw_mode, 0, (int)(t*(float)_objectCount()));
+	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
 }
 
 template<unsigned int NUM_ATTRIBUTES>
-drawable<NUM_ATTRIBUTES>::drawable()
+Drawable<NUM_ATTRIBUTES>::Drawable()
 {
 	glGenVertexArrays(1, &_vao);
 	for (int i = 0; i < NUM_ATTRIBUTES; i++) {
@@ -31,15 +31,15 @@ drawable<NUM_ATTRIBUTES>::drawable()
 }
 
 template<unsigned int NUM_ATTRIBUTES>
-void drawable<NUM_ATTRIBUTES>::init_buffers(GLenum usage)
+void Drawable<NUM_ATTRIBUTES>::initBuffers(GLenum usage)
 {
 	float* attribute_buffers[NUM_ATTRIBUTES];
 
 	for (int i = 0; i < NUM_ATTRIBUTES; i++) {
-		attribute_buffers[i] = new float[_bufsize(i)](0);
+		attribute_buffers[i] = new float[_bufSize(i)](0);
 	}
 
-	_copy_attributes(attribute_buffers);
+	_copyAttributes(attribute_buffers);
 
 	glBindVertexArray(_vao);
 
@@ -47,7 +47,7 @@ void drawable<NUM_ATTRIBUTES>::init_buffers(GLenum usage)
 	for (int i = 0; i < NUM_ATTRIBUTES; i++) {
 		glEnableVertexAttribArray(i);
 		glBindBuffer(GL_ARRAY_BUFFER, _vbos[i]);
-		glBufferData(GL_ARRAY_BUFFER, _bufsize(i) * sizeof(float), attribute_buffers[i], usage);
+		glBufferData(GL_ARRAY_BUFFER, _bufSize(i) * sizeof(float), attribute_buffers[i], usage);
 		glVertexAttribPointer(i, _primitive_sizes[i], GL_FLOAT, GL_FALSE, 0, NULL);
 
 	}
