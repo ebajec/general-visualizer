@@ -1,7 +1,7 @@
 #pragma once
 #ifndef VERTEX_H
 #define VERTEX_H
-#include "matrix.hpp"
+#include "matrix.h"
 #include "linked_list.h"
 #include <unordered_set>
 #include <GL/glew.h>

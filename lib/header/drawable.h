@@ -5,7 +5,7 @@
 
 #include "GL/glew.h"
 #include "shader.h"
-#include "matrix.hpp"
+#include "matrix.h"
 
 
 

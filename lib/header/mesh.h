@@ -8,7 +8,7 @@
 #include <GL/glew.h>
 #include "drawable.h"
 #include "vertex.h"
-#include "matrix.hpp"
+#include "matrix.h"
 #include "shapes.h"
 
 void center(Vertex* start);

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include "matrix.hpp"
+#include "matrix.h"
 #include "mesh.h"
 #include "shapes.h"
 #include "shader.h"
@@ -27,14 +27,13 @@ public:
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("lib/shader/vertex.glsl", "lib/shader/frag.glsl");
+		_cam = Camera(vec3({ 0,-1,1 }), vec3({ 0,5,-5 }), PI / 3);
 
-		Camera cam(vec3({ 0,-1,1 }), vec3({ 0,5,-5 }), PI / 3);
 		Mesh torus_model(Surface([](float s, float t) {
 
 			return Torus(1.0f, 0.5f)(s, t);
 
-			}, 2 * PI, 2 * PI), 1, 100, 100);
-
+			}, 2 * PI, 2 * PI), 1, 50, 50);
 		torus_model.setType(LINE);
 		torus_model.transformVertices([](Vertex* v) {
 			v->position = rotateyz<GLfloat>(-PI / 2) * v->position;
@@ -45,15 +44,14 @@ protected:
 
 		while (!glfwWindowShouldClose(_window)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 			_main_shader.use();
-			cam.connectUniforms(_main_shader);
+			_cam.connectUniforms(_main_shader);
+
 			torus_model.draw(_main_shader);
+			torus_model.transform(R);
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
-
-			cam.translate({ 0,0,0.0001 });
 		}
 	}
 
@@ -63,7 +61,7 @@ int main() {
 	inputViewWindow  window(800, 800);
 	window.launch("DONUT", NULL, NULL);
 	
-	std::cout << "running";
+	std::cout << "running\n";
 
 	std::string x;
 	while (x != "close") std::cin >> x;

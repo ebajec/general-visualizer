@@ -15,13 +15,11 @@ BaseViewWindow::BaseViewWindow(
 void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
 {
 	_main_thread = std::thread(&BaseViewWindow::_launchProcess, this, title, monitor, share);
-	//_main_thread.detach();
 }
 
 void BaseViewWindow::close()
 {
 	_main_thread.detach();
-
 	return;
 }
 

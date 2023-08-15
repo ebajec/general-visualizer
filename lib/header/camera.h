@@ -1,5 +1,5 @@
 #pragma once
-#include "matrix.hpp"
+#include "matrix.h"
 #include "shader.h"
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h> 
