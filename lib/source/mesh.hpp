@@ -204,7 +204,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 
 			current->connect(next_s);
 			current->connect(next_t);
-			//current->connect(diag);
+			current->connect(diag);
 		}
 	}
 

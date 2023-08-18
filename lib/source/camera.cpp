@@ -10,8 +10,8 @@ Camera::Camera(
 	:
 	_w_screen(w_screen),
 	_h_screen(h_screen),
-	near_dist(1 / tan(FOV / 2)),
-	far_dist(far),
+	_near_dist(1 / tan(FOV / 2)),
+	_far_dist(far),
 	_pos(pos)
 {
 	//generate orthonormal, right-handed basis for camera coordinates, with Z
@@ -27,7 +27,7 @@ Camera::Camera(
 	_proj = (
 		basis[0] | basis[1] | vec3(0.0f) | vec3(0.0f)).transpose() | vec4(0.0f);
 
-	_view = mat4(change_of_basis | -1 * (change_of_basis * (_pos - basis[2] * near_dist)));
+	_view = mat4(change_of_basis | -1 * (change_of_basis * (_pos - basis[2] * _near_dist)));
 
 	_model = mat4{
 		1,0,0,0,
@@ -39,10 +39,10 @@ Camera::Camera(
 
 void Camera::connectUniforms(const ShaderProgram& shader)
 {
-	glUniform1f(shader.getUniform("near_dist"), near_dist);
-	glUniform1f(shader.getUniform("far_dist"), far_dist);
+	glUniform1f(shader.getUniform("near_dist"), _near_dist);
+	glUniform1f(shader.getUniform("far_dist"), _far_dist);
 	glUniformMatrix4fv(shader.getUniform("cam_projection"), 1, GL_FALSE, _proj.data());
-	glUniformMatrix4fv(shader.getUniform("cam_modelview"), 1, GL_TRUE, (_model * _view ).data());
+	glUniformMatrix4fv(shader.getUniform("cam_modelview"), 1, GL_TRUE, (_model * _view).data());
 }
 
 void Camera::rotate(float pitch, float yaw)
@@ -52,6 +52,6 @@ void Camera::rotate(float pitch, float yaw)
 
 void Camera::translate(vec3 delta) {
 	_pos = _pos + delta;
-	_update_view();
+	_updateViewMat();
 }
 

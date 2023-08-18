@@ -145,7 +145,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib\module;$(ProjectDir)lib\shader;$(ProjectDir)lib\source;$(ProjectDir)lib\header;$(ProjectDir)include;C:\Users\semen\source\repos\linear-algebra\lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)lib\module;$(ProjectDir)lib\shader;$(ProjectDir)lib\source;$(ProjectDir)lib\header;$(ProjectDir)include;C:\Users\Eli The Dingo\source\repos\ebajec\linear-algebra\lib</AdditionalIncludeDirectories>
       <EnableModules>true</EnableModules>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
