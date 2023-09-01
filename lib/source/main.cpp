@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "matrix.h"
 #include "view_window.h"
+#include "math.h"
 
 import misc;
 
@@ -15,9 +16,13 @@ using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 
 #define WINDOW_HEIGHT 1080
-#define WINDOW_WIDTH 1080
+#define WINDOW_WIDTH 1920
 
-enum DIRECTIONS { UP, DOWN, LEFT, RIGHT, FORWARD, BACK };
+struct CameraManager {
+	vec3 _motion_dir;
+
+
+};
 
 #include "mesh.h"
 class inputViewWindow : public BaseViewWindow {
@@ -26,13 +31,11 @@ protected:
 
 	void _main() {
 		_main_shader = ShaderProgram("lib/shader/vertex.glsl", "lib/shader/frag.glsl");
-		_cam = Camera(vec3({ 0,-1,1 }), vec3({ 0,5,-5 }), PI / 3);
-
 		Mesh torus_model(Surface([](float s, float t) {
+			
+			return vec3{(s)*cos(t),sin(s*erf(s))*sin(5*t),(s)*sin(t)};
 
-			return Torus(1.0f, 0.5f)(s, t);
-
-			}, 2 * PI, 2 * PI), 1, 50, 50);
+			}, 2*PI, 2 * PI), 1, 100, 300);
 		//torus_model.setType(LINE);
 		torus_model.transformVertices([](Vertex* v) {
 			v->position = rotateyz<GLfloat>(-PI / 2) * v->position;
@@ -46,7 +49,7 @@ protected:
 			return;
 		};
 
-		_key_manager.mapKeyFunc(GLFW_KEY_R, GLFW_REPEAT, movtorus);
+		_key_manager.mapKeyFunc(GLFW_KEY_R, GLFW_PRESS, movtorus);
 
 		while (!glfwWindowShouldClose(_window)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -54,7 +57,7 @@ protected:
 			_cam.connectUniforms(_main_shader);
 
 			torus_model.draw(_main_shader);
-			torus_model.transform(R);
+			//torus_model.transform(R);
 
 			_cam.translate(_motion_dir * 0.01);
 
@@ -62,21 +65,26 @@ protected:
 			glfwPollEvents();
 		}
 	}
-	void _mapMovementKeys(int action) {
-		int mval = (action == GLFW_PRESS || action == GLFW_REPEAT);
-		vec3& dir = _motion_dir;
-		_key_manager.mapKeyFunc(GLFW_KEY_W, action, [&dir, mval]() {dir[0][2] = mval; });
-		_key_manager.mapKeyFunc(GLFW_KEY_A, action, [&dir, mval]() {dir[0][0] = mval; });
-		_key_manager.mapKeyFunc(GLFW_KEY_S, action, [&dir, mval]() {dir[0][2] = -mval; });
-		_key_manager.mapKeyFunc(GLFW_KEY_D, action, [&dir, mval]() {dir[0][0] = -mval; });
-		_key_manager.mapKeyFunc(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {dir[0][1] = -mval; });
-		_key_manager.mapKeyFunc(GLFW_KEY_SPACE, action, [&dir, mval]() {dir[0][1] = mval; });
+
+	void _mapMovementKeys() {
+		auto map_keys = [this](int action) {
+			int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
+			vec3& dir = this->_motion_dir;
+			this->_key_manager.mapKeyFunc(GLFW_KEY_W, action, [&dir, mval]() {dir[0][2] += mval; });
+			this->_key_manager.mapKeyFunc(GLFW_KEY_A, action, [&dir, mval]() {dir[0][0] += mval; });
+			this->_key_manager.mapKeyFunc(GLFW_KEY_S, action, [&dir, mval]() {dir[0][2] += -mval; });
+			this->_key_manager.mapKeyFunc(GLFW_KEY_D, action, [&dir, mval]() {dir[0][0] += -mval; });
+			this->_key_manager.mapKeyFunc(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {dir[0][1] += -mval; });
+			this->_key_manager.mapKeyFunc(GLFW_KEY_SPACE, action, [&dir, mval]() {dir[0][1] += mval; });
+		};
+		map_keys(GLFW_PRESS);
+		map_keys(GLFW_RELEASE);
+		return;
 	}
 public:
 	inputViewWindow(int width, int height) : BaseViewWindow(width, height) {
-		_mapMovementKeys(GLFW_PRESS);
-		_mapMovementKeys(GLFW_REPEAT);
-		_mapMovementKeys(GLFW_RELEASE);
+		_mapMovementKeys();
+		
 	}
 };
 
@@ -84,7 +92,7 @@ public:
 int main() {
 	std::cout << "Welcome to random stuff.\n\n";
 
-	inputViewWindow  window(800, 800);
+	inputViewWindow  window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	std::string command;
 

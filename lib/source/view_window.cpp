@@ -7,11 +7,11 @@ BaseViewWindow::BaseViewWindow(
 	int height
 ) : _width(width), _height(height) {
 	_cam = Camera(
-		vec3({ 0,0,0 }),
-		vec3({ 0,0,-1 }),
-		PI / 3,
+		vec3({ 0,0,1 }),
+		vec3({ 0,0,- 1 }),
 		_width,
-		_height);
+		_height,
+		PI/3);
 }
 
 void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)

@@ -25,7 +25,7 @@ void main() {
 	frag_pos = vec3(v_pos_new);
 	
 	//now we calculate camera position
-	v_pos_new = cam_modelview * v_pos_new;
+	v_pos_new = cam_projection*cam_modelview * v_pos_new;
 
 	float w = v_pos_new.z/near_dist;
 	float depth = 2*(v_pos_new.z - near_dist)/(far_dist - near_dist) - 1;

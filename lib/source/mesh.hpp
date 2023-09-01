@@ -155,7 +155,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 
 	switch (genus) {
 		//equivalent to sphere
-	case 0:
+	case 2:
 		size = (N_s - 1) * N_t + 2; // +2 for bottom point and top point (i.e., infinity)
 		gen_vertices(size);
 		_vertex_list[1]->position = S.eval(s_max, t_max); //top
@@ -170,9 +170,21 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 		};
 
 		break;
+	case 1:
+		size = N_s * N_t;
+		gen_vertices(size);
+		quot = [=](int i, int j) {
+			return pair<int, int>(i - (i >= N_s), N_t - 1 - modulo(j, N_t));
+		};
+
+		indexer = [=](pair<int, int> ind) {
+			return ind.first * N_t + ind.second;
+		};
+
+		break;
 
 		//equivalent to torus
-	case 1:
+	case 0:
 		size = N_s * N_t;
 		gen_vertices(size);
 

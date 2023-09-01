@@ -24,8 +24,13 @@ Camera::Camera(
 
 	change_of_basis = inv(basis[0] | basis[1] | basis[2]);
 
-	_proj = (
-		basis[0] | basis[1] | vec3(0.0f) | vec3(0.0f)).transpose() | vec4(0.0f);
+	float screen_ratio = (float)_h_screen / (float)_w_screen;
+	_proj = {
+		screen_ratio,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
 
 	_view = mat4(change_of_basis | -1 * (change_of_basis * (_pos - basis[2] * _near_dist)));
 
