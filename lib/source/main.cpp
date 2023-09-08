@@ -9,22 +9,15 @@
 #include "matrix.h"
 #include "view_window.h"
 #include "math.h"
-
-import misc;
+#include "mesh.h"
+#include "misc.h"
 
 using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 
-#define WINDOW_HEIGHT 1080
-#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 540
+#define WINDOW_WIDTH 960 
 
-struct CameraManager {
-	vec3 _motion_dir;
-
-
-};
-
-#include "mesh.h"
 class inputViewWindow : public BaseViewWindow {
 protected:
 	vec3 _motion_dir = { 0,0,0 };
@@ -32,10 +25,10 @@ protected:
 	void _main() {
 		_main_shader = ShaderProgram("lib/shader/vertex.glsl", "lib/shader/frag.glsl");
 		Mesh torus_model(Surface([](float s, float t) {
-			
-			return vec3{(s)*cos(t),sin(s*erf(s))*sin(5*t),(s)*sin(t)};
 
-			}, 2*PI, 2 * PI), 1, 100, 300);
+			return 10 * Torus(2.0f, 1.0f)(s, t);
+
+			}, 4 * PI, 2 * PI), 0, 100, 300);
 		//torus_model.setType(LINE);
 		torus_model.transformVertices([](Vertex* v) {
 			v->position = rotateyz<GLfloat>(-PI / 2) * v->position;
@@ -58,18 +51,21 @@ protected:
 
 			torus_model.draw(_main_shader);
 			//torus_model.transform(R);
-
 			_cam.translate(_motion_dir * 0.01);
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
+
+		_key_manager.unmapKey(GLFW_KEY_R, GLFW_PRESS);
 	}
 
 	void _mapMovementKeys() {
+		//map_keys is to condense things
 		auto map_keys = [this](int action) {
+			//mval determines whether motion in a direction should start or stop
 			int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
-			vec3& dir = this->_motion_dir;
+			vec3& dir = this->_cam_manager.motion_dir;
 			this->_key_manager.mapKeyFunc(GLFW_KEY_W, action, [&dir, mval]() {dir[0][2] += mval; });
 			this->_key_manager.mapKeyFunc(GLFW_KEY_A, action, [&dir, mval]() {dir[0][0] += mval; });
 			this->_key_manager.mapKeyFunc(GLFW_KEY_S, action, [&dir, mval]() {dir[0][2] += -mval; });
@@ -84,13 +80,12 @@ protected:
 public:
 	inputViewWindow(int width, int height) : BaseViewWindow(width, height) {
 		_mapMovementKeys();
-		
 	}
 };
 
 
 int main() {
-	std::cout << "Welcome to random stuff.\n\n";
+	std::cout << "Welcome.\n\n";
 
 	inputViewWindow  window(WINDOW_WIDTH, WINDOW_HEIGHT);
 

@@ -38,7 +38,7 @@ public:
 	// F must be a lambda taking in an argument the size of each object in the buffer
 	template<typename func> void transformBuffer(VERTEX_ATTRIBUTE attribute, func F);
 
-	//F must be a lamda taking in a pointer to a vertex
+	//F must be a lambda taking in a pointer to a vertex
 	template<typename func> void transformVertices(func F);
 
 protected:

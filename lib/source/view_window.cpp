@@ -8,10 +8,11 @@ BaseViewWindow::BaseViewWindow(
 ) : _width(width), _height(height) {
 	_cam = Camera(
 		vec3({ 0,0,1 }),
-		vec3({ 0,0,- 1 }),
+		vec3({ 0,0,-1 }),
 		_width,
 		_height,
-		PI/3);
+		PI / 3);
+	_cam_manager.attach(&_cam);
 }
 
 void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
@@ -47,6 +48,10 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetWindowUserPointer(_window, this);
 	glfwSetKeyCallback(_window, _keyCallback);
 
+	glfwSetCursorPosCallback(_window, _cursorPosCallback);
+	_enableMouseControls();
+	_cam_manager.start();
+
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
 	const GLubyte* _version = glGetString(GL_VERSION);
 	printf("Renderer: %s\n", _renderer);
@@ -59,7 +64,7 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	_main();
 
 	_main_thread.detach();
-
+	_cam_manager.stop();
 	_is_running = false;
 	glfwDestroyWindow(_window);
 	glfwTerminate();
@@ -73,6 +78,24 @@ void BaseViewWindow::_keyCallback(GLFWwindow* window, int key, int scancode, int
 	win->_key_manager.callKeyFunc(key, action);
 }
 
+void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
+	win->_cam_manager.rotate(xpos, ypos);
+}
+
+void BaseViewWindow::_enableMouseControls()
+{
+	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	if (glfwRawMouseMotionSupported()) {
+		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+	}
+	else return;
+
+
+}
+
 void KeyManager::callKeyFunc(int key, int action)
 {
 	pair<int, int> keyaction({ key,action });
@@ -81,3 +104,45 @@ void KeyManager::callKeyFunc(int key, int action)
 
 	return;
 }
+
+void CameraManager::_update_loop()
+{
+	while (true) {
+		if (_should_close) return;
+		_cam->translate(motion_dir * movespeed);
+	}
+	return;
+}
+
+CameraManager::~CameraManager()
+{
+	_should_close = true;
+	_updater_thread.detach();
+}
+
+void CameraManager::start()
+{
+	_should_close = false;
+	motion_dir = { 0,0,0 };
+	_cursor_pos = { 0,0 };
+	_updater_thread = thread(&CameraManager::_update_loop, this);
+	return;
+}
+
+void CameraManager::stop()
+{
+	_should_close = true;
+	_updater_thread.detach();
+	_cam->reset();
+	return;
+}
+
+void CameraManager::rotate(double x_new, double y_new)
+{
+	double dx = (_cursor_pos[0][0] - x_new) * camspeed;
+	double dy = (_cursor_pos[0][1] - y_new) * camspeed;
+	_cursor_pos = { (float)x_new,(float)y_new };
+	_cam->rotate(dy, dx);
+	return;
+}
+

@@ -6,8 +6,7 @@
 #include <unordered_set>
 #include <GL/glew.h>
 #define VERTEX_ATTRIBUTES 4
-
-import misc;
+#include "misc.h"
 
 enum VERTEX_ATTRIBUTE {
 	POSITION,

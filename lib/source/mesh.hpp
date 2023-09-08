@@ -8,8 +8,7 @@
 #include <unordered_set>
 #include <queue>
 #include <functional>
-
-import misc;
+#include "misc.h"
 
 vec3 centroid(Vertex* start) {
 	int count = 0;
@@ -397,7 +396,7 @@ void Mesh::_findFacesTriangular() {
 	}
 
 	//throw exception if none exist
-	if (F_0->size() == 0) throw std::exception("mesh is not locally planar");
+	if (F_0->size() == 0) return;
 
 	unordered_set<Edge*, Edge::Hasher, Edge::Comparator> visited_edges;
 

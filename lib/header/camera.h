@@ -9,6 +9,7 @@
 #define PI 3.141592654f
 
 using vec3 = matrix<3, 1, GLfloat>;
+using vec2 = matrix<2, 1, GLfloat>;
 using vec4 = matrix<4, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 using mat4 = matrix<4, 4, GLfloat>;
@@ -29,6 +30,7 @@ public:
 	void connectUniforms(const ShaderProgram& shader);
 	void rotate(float pitch, float yaw);
 	void translate(vec3 delta);
+	void reset();
 private:
 	int _w_screen;
 	int _h_screen;
@@ -39,12 +41,17 @@ private:
 	vec3 _pos;
 	vec3 basis[3];
 	mat3 change_of_basis;
-	mat4 _model;
+	mat4 _world;
+	//vertical rotations
+	mat4 _model_pitch;
+	//horizontal rotations
+	mat4 _model_yaw;
 	mat4 _view;
 	mat4 _proj;
 
 	void _updateViewMat() {
-		_view = mat4(change_of_basis | -1 * (change_of_basis * (_pos - basis[2] * _near_dist)));
+		_view = mat4(change_of_basis);
+		_world = mat4(mat3::id() | -1 * (_pos - basis[2] * _near_dist));
 	}
 };
 

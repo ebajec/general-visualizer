@@ -84,7 +84,7 @@ void linked_list<T>::reverse() {
 	tail->prior = nullptr;
 
 	while (current != nullptr) {
-		node* next = current->prior;
+		node<T>* next = current->prior;
 		previous->next = current;
 		current->prior = previous;
 		current->next = nullptr;

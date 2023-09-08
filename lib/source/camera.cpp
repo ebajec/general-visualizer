@@ -15,7 +15,7 @@ Camera::Camera(
 	_pos(pos)
 {
 	//generate orthonormal, right-handed basis for camera coordinates, with Z
-	//as the normal vector.
+	//as the normal vector. xyz
 	basis[2] = normalize(normal);
 	basis[0] = cross(basis[2], vec3({ 0,1,0 }));
 	basis[1] = cross(basis[0], basis[2]);
@@ -32,9 +32,15 @@ Camera::Camera(
 		0,0,0,1
 	};
 
-	_view = mat4(change_of_basis | -1 * (change_of_basis * (_pos - basis[2] * _near_dist)));
-
-	_model = mat4{
+	_world = mat4(mat3::id() | -1 * (_pos - basis[2] * _near_dist));
+	_view = mat4(change_of_basis);
+	_model_yaw = mat4{
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+	_model_pitch = mat4{
 		1,0,0,0,
 		0,1,0,0,
 		0,0,1,0,
@@ -47,16 +53,36 @@ void Camera::connectUniforms(const ShaderProgram& shader)
 	glUniform1f(shader.getUniform("near_dist"), _near_dist);
 	glUniform1f(shader.getUniform("far_dist"), _far_dist);
 	glUniformMatrix4fv(shader.getUniform("cam_projection"), 1, GL_FALSE, _proj.data());
-	glUniformMatrix4fv(shader.getUniform("cam_modelview"), 1, GL_TRUE, (_model * _view).data());
+	glUniformMatrix4fv(shader.getUniform("cam_modelview"), 1, GL_TRUE, (_view * _model_pitch * _model_yaw * _world).data());
 }
 
 void Camera::rotate(float pitch, float yaw)
 {
-	_model = _model * mat4(rotateyz<GLfloat>(pitch) * rotatexz<GLfloat>(yaw));
+	if (pitch > PI) return;
+	_model_yaw = mat4(rotatexz<GLfloat>(-yaw)) * _model_yaw;
+	_model_pitch = mat4(rot_axis(basis[0], -pitch)) * _model_pitch;
 }
 
 void Camera::translate(vec3 delta) {
-	_pos = _pos + delta;
+	_pos = _pos - change_of_basis * mat3(_model_yaw) * delta;
+	_updateViewMat();
+}
+
+void Camera::reset()
+{
+	_pos = { 0,0,0 };
+	_model_yaw = mat4{
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
+	_model_pitch = mat4{
+		1,0,0,0,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
 	_updateViewMat();
 }
 
