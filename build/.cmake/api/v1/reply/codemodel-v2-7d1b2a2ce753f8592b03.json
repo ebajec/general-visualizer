@@ -1,0 +1,142 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "build",
+					"childIndexes" : 
+					[
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-build-Debug-bcf4d1dcb4db580218e4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "/home/elijah/src/glfw",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "build/src",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-build.src-Debug-34bc7ebe3c142ce00d0e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "/home/elijah/src/glfw/src",
+					"targetIndexes" : 
+					[
+						0,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "visualizer",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1,
+						2
+					],
+					"name" : "GLFW",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "glfw::@1f2133f60341753f7993",
+					"jsonFile" : "target-glfw-Debug-343014c82e4ebec74dc8.json",
+					"name" : "glfw",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "uninstall::@039278ea0a093c55e3e1",
+					"jsonFile" : "target-uninstall-Debug-c3534effbd8b0d1732cc.json",
+					"name" : "uninstall",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "update_mappings::@1f2133f60341753f7993",
+					"jsonFile" : "target-update_mappings-Debug-58e62959f19f4b47165a.json",
+					"name" : "update_mappings",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "visualizer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-visualizer-Debug-e879177af6132dc9e429.json",
+					"name" : "visualizer",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/elijah/src/repos/ebajec/general-visualizer/build",
+		"source" : "/home/elijah/src/repos/ebajec/general-visualizer"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}
