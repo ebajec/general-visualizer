@@ -38,7 +38,7 @@ protected:
 	GLuint _vbos[NUM_ATTRIBUTES];
 
 	//Size of buffer in number of floating point values.  NOT size in bytes.
-	size_t _bufSize(int attribute) { return _objectCount() * _primitive_sizes[attribute]; }
+	long unsigned int _bufSize(int attribute) { return _objectCount() * _primitive_sizes[attribute]; }
 
 	//define layout map and primitive sizes here
 	virtual void _init() = 0;

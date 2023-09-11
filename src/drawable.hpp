@@ -33,10 +33,12 @@ Drawable<NUM_ATTRIBUTES>::Drawable()
 template<unsigned int NUM_ATTRIBUTES>
 void Drawable<NUM_ATTRIBUTES>::initBuffers(GLenum usage)
 {
-	float* attribute_buffers[NUM_ATTRIBUTES];
+	int n = NUM_ATTRIBUTES;
+	float** attribute_buffers = new float*[n] ;
 
-	for (int i = 0; i < NUM_ATTRIBUTES; i++) {
-		attribute_buffers[i] = new float[_bufSize(i)](0);
+	for (int i = 0; i < n ; i++) {
+		int size = _bufSize(i);
+		attribute_buffers[i] = new float[size];
 	}
 
 	_copyAttributes(attribute_buffers);
@@ -44,7 +46,7 @@ void Drawable<NUM_ATTRIBUTES>::initBuffers(GLenum usage)
 	glBindVertexArray(_vao);
 
 	//copy data in vertex attributes to vertex array buffers
-	for (int i = 0; i < NUM_ATTRIBUTES; i++) {
+	for (int i = 0; i < n ; i++) {
 		glEnableVertexAttribArray(i);
 		glBindBuffer(GL_ARRAY_BUFFER, _vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, _bufSize(i) * sizeof(float), attribute_buffers[i], usage);

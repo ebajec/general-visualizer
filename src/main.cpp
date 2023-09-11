@@ -29,7 +29,7 @@ protected:
 			return 10 * Torus(2.0f, 1.0f)(s, t);
 
 			}, 4 * PI, 2 * PI), 0, 100, 300);
-		//torus_model.setType(LINE);
+
 		torus_model.transformVertices([](Vertex* v) {
 			v->position = rotateyz<GLfloat>(-PI / 2) * v->position;
 			});
