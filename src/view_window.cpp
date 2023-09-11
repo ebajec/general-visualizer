@@ -49,7 +49,7 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetKeyCallback(_window, _keyCallback);
 
 	glfwSetCursorPosCallback(_window, _cursorPosCallback);
-	_enableMouseControls();
+	//_enableMouseControls();
 	_cam_manager.start();
 
 	const GLubyte* _renderer = glGetString(GL_RENDERER);

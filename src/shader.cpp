@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 #define MAX_LINE_LENGTH 100
 
@@ -59,31 +61,51 @@ inline char* read_text_file(FILE* file) {
 	return text;
 }
 
+inline string read_text_file_2(const char* src){
+	ifstream file(src);
+
+	if (!file.is_open()) {
+		fprintf(stderr, "ERROR: could not open file:\n",src,"\n");
+		return "";
+	}
+
+	string line;
+	string text;
+
+	while (getline(file,line)) {
+		text.append(line).append("\n");
+	}
+
+	return text;
+}
+
+
 ShaderProgram::ShaderProgram(const char* vertex_shader_path, const char* fragment_shader_path) {
 	init();
 
-	// read shader data from files
-	FILE* fragment_shader_data;
-	FILE* vertex_shader_data;
-
-	fragment_shader_data = fopen(fragment_shader_path, "r");
-	vertex_shader_data = fopen(vertex_shader_path, "r");
+	//// read shader data from files
+	//FILE* fragment_shader_data;
+	//FILE* vertex_shader_data;
+//
+	//fragment_shader_data = fopen(fragment_shader_path, "r");
+	//vertex_shader_data = fopen(vertex_shader_path, "r");
 
 	printf("shader?\n");
 
-	if (fragment_shader_data == NULL || vertex_shader_data == NULL) {
-		printf("no shader\n");
+	string vertex_shader_source = read_text_file_2(vertex_shader_path);
+	string fragment_shader_source = read_text_file_2(fragment_shader_path);
+
+	if (fragment_shader_source == "" || vertex_shader_source == "") {
+		printf("no shader\n"); 
 		fprintf(stderr, "ERROR: could not open shader files\n");
 		glfwTerminate();
 	}
 
 	printf("yes shader\n");
-	const char* vertex_shader_source = read_text_file(vertex_shader_data);
-	const char* fragment_shader_source = read_text_file(fragment_shader_data);
-
+	
 	//compile shaders
-	_compileShader(GL_VERTEX_SHADER, vertex_shader_source);
-	_compileShader(GL_FRAGMENT_SHADER, fragment_shader_source);
+	_compileShader(GL_VERTEX_SHADER, vertex_shader_source.c_str());
+	_compileShader(GL_FRAGMENT_SHADER, fragment_shader_source.c_str());
 
 	glLinkProgram(program);
 }
