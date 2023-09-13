@@ -26,7 +26,15 @@ find_package(OpenGL REQUIRED)
 # Add source files
 add_executable(visualizer ${SOURCES})
 
+#link GLEW differently depending on platform
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(GLEW_LIB ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(GLEW_LIB GLEW)
+else ()
+endif ()
+
 target_link_libraries(visualizer glfw)
-target_link_libraries(visualizer ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
+target_link_libraries(visualizer ${GLEW_LIB})
 target_link_libraries(visualizer OpenGL::GL)
 
