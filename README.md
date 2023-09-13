@@ -7,6 +7,6 @@ My goal here was to create a generalized framework in which I can visualize geom
 
 **How to use:** Once the program has opened, type "launch" in the console window to launch the scene. There are a few other commands, and I will probably add more. 
 
-*close:* closes the scene being rendered
+*close:* closes the scene being rendered.
 
-*exit:* exits the program
+*exit:* exits the program.
