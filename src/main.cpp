@@ -24,21 +24,33 @@ protected:
 
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		Mesh torus_model(Surface([](float s, float t) {
 
-			return 10 * Torus(2.0f, 1.0f)(s, t);
+		//graph
+		Mesh graph(Surface([](float s, float t) {
+			std::complex<double> z = (double)(s)*exp(((double)t)*1i);
+			std::complex<double> f = z*z;
 
-			}, 4 * PI, 2 * PI), 0, 100, 300);
+			return 10.0f*vec3{(float)real(f),(float)imag(z),(float)imag(f)};
 
-		torus_model.transformVertices([](Vertex* v) {
-			v->position = rotateyz<GLfloat>(-PI / 2) * v->position;
-			});
-		torus_model.initBuffers(GL_STREAM_DRAW);
+			}, 1.0f, 2*PI), 1, 100, 100);
+		graph.initBuffers(GL_STREAM_DRAW);
+
+		//normal
+		Mesh disk(Surface([](float s, float t) {
+			std::complex<double> z = (double)s*exp(((double)t)*1i);
+
+			return 10.0f*vec3{(float)real(z),0,(float)imag(z)};
+
+		}, 1.0f, 2*PI), 1, 100, 100);
+
+		disk.initBuffers(GL_STREAM_DRAW);
+
+
 
 		mat3 R = rotatexy<GLfloat>(PI / 2048);
 
 		auto movtorus = [&]() {
-			torus_model.transform(rotateyz<GLfloat>(PI / 12));
+			graph.transform_lin(rotateyz<GLfloat>(PI / 12));
 			return;
 		};
 
@@ -49,8 +61,9 @@ protected:
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
 
-			torus_model.draw(_main_shader);
-			//torus_model.transform(R);
+			disk.draw(_main_shader);
+			graph.draw(_main_shader);
+
 			_cam.translate(_motion_dir * 0.01);
 
 			glfwSwapBuffers(_window);
@@ -94,9 +107,12 @@ int main() {
 	while (true) {
 		std::cin >> command;
 
-		if (command == "exit") break;
+		if (command == "exit") {
+			window.close();
+			return 0;
+		}
 
-		else if (command == "launch" && !window.isRunning()) window.launch("DONUT", NULL, NULL);
+		else if (command == "launch" && !window.isRunning()) window.launch("test", NULL, NULL);
 
 		else if (command == "close" && window.isRunning()) window.close();
 

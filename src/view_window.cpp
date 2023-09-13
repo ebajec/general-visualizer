@@ -68,6 +68,8 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	_is_running = false;
 	glfwDestroyWindow(_window);
 	glfwTerminate();
+
+	
 	return;
 }
 

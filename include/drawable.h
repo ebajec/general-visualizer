@@ -17,7 +17,7 @@ public:
 	void initBuffers(GLenum usage);
 	virtual void reinitBuffer(GLenum usage, unsigned int attribute) = 0;
 
-	void transform(mat4 A) { _model = _model * A; }
+	void transform_lin(mat4 A) { _model = _model * A; }
 	void draw(ShaderProgram shader, float t = 1);
 
 	void setMode(GLenum mode) { _draw_mode = mode; }

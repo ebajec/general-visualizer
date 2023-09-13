@@ -90,18 +90,13 @@ ShaderProgram::ShaderProgram(const char* vertex_shader_path, const char* fragmen
 	//fragment_shader_data = fopen(fragment_shader_path, "r");
 	//vertex_shader_data = fopen(vertex_shader_path, "r");
 
-	printf("shader?\n");
-
 	string vertex_shader_source = read_text_file_2(vertex_shader_path);
 	string fragment_shader_source = read_text_file_2(fragment_shader_path);
 
 	if (fragment_shader_source == "" || vertex_shader_source == "") {
-		printf("no shader\n"); 
 		fprintf(stderr, "ERROR: could not open shader files\n");
 		glfwTerminate();
 	}
-
-	printf("yes shader\n");
 	
 	//compile shaders
 	_compileShader(GL_VERTEX_SHADER, vertex_shader_source.c_str());
