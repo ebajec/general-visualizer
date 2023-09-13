@@ -27,6 +27,6 @@ find_package(OpenGL REQUIRED)
 add_executable(visualizer ${SOURCES})
 
 target_link_libraries(visualizer glfw)
-target_link_libraries(visualizer ${CMAKE_SOURCE_DIR}/lib-vc2022/glew32.lib)
+target_link_libraries(visualizer ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
 target_link_libraries(visualizer OpenGL::GL)
 
