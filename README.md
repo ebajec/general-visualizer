@@ -1,4 +1,4 @@
-# opengl-framework
+# general-visualizer
 Basic 3D rendering components I have made from scratch with OpenGL. Currently, this is able to generate and render meshes for parameterized shapes in 3D. The parameterization must be explicity specified in main.cpp, but I plan to change this.
 
 My goal here was to create a generalized framework in which I can visualize geometric objects.     
