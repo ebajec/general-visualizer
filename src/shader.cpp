@@ -12,6 +12,8 @@
 
 #define MAX_LINE_LENGTH 100
 
+/*I was previously using this function to read files, but it does not work on
+all platforms for some reason.*/
 inline char* read_text_file(FILE* file) {
 	if (file == nullptr) {
 		return nullptr;

@@ -295,7 +295,7 @@ void Mesh::transformBuffer(VERTEX_ATTRIBUTE attribute, func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
 	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	transform_pts_3<func>(mem, _bufSize(attribute) / 3, F);
+	transform_pts_3_lam<func>(mem, _objectCount(), F);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 

@@ -6,9 +6,11 @@ BaseViewWindow::BaseViewWindow(
 	int width,
 	int height
 ) : _width(width), _height(height) {
+	_mapMovementKeys();
+	
 	_cam = Camera(
 		vec3({ 0,0,1 }),
-		vec3({ 0,0,-1 }),
+		vec3({ 0,-5,-10 }),
 		_width,
 		_height,
 		PI / 3);
@@ -96,6 +98,24 @@ void BaseViewWindow::_enableMouseControls()
 	else return;
 
 
+}
+
+void BaseViewWindow::_mapMovementKeys()  {
+	//map_keys is to condense things
+	auto map_keys = [this](int action) {
+		//mval determines whether motion in a direction should start or stop
+		int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
+		vec3& dir = this->_cam_manager.motion_dir;
+		this->_key_manager.map(GLFW_KEY_W, action, [&dir, mval]() {dir[0][2] += mval; });
+		this->_key_manager.map(GLFW_KEY_A, action, [&dir, mval]() {dir[0][0] += mval; });
+		this->_key_manager.map(GLFW_KEY_S, action, [&dir, mval]() {dir[0][2] += -mval; });
+		this->_key_manager.map(GLFW_KEY_D, action, [&dir, mval]() {dir[0][0] += -mval; });
+		this->_key_manager.map(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {dir[0][1] += -mval; });
+		this->_key_manager.map(GLFW_KEY_SPACE, action, [&dir, mval]() {dir[0][1] += mval; });
+	};
+	map_keys(GLFW_PRESS);
+	map_keys(GLFW_RELEASE);
+	return;
 }
 
 void KeyManager::callKeyFunc(int key, int action)

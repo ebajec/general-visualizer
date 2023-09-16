@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h> 
 #include "matrix.h"
 
-//module misc;
+//header library for random functions
 
 using mat3 = matrix<3, 3, GLfloat>;
 using vec3 = matrix<3, 1, GLfloat>;
@@ -57,7 +57,7 @@ inline centroid(initializer_list<matrix<n, 1, F>> vectors) {
 }
 
 template<typename func>
-inline void transform_pts_3(float* points, int num_pts, func F) {
+inline void transform_pts_3_lam(float* points, size_t num_pts, func F) {
 	int n = 3;
 	for (int i = 0; i < num_pts; i++) {
 		vec3 p(points + i * n);
@@ -69,7 +69,7 @@ inline void transform_pts_3(float* points, int num_pts, func F) {
 	return;
 }
 
-inline void transform_pts_3(float* points, int num_pts, mat3 F) {
+inline void transform_pts_3(float* points, size_t num_pts, mat3 F) {
 	int n = 3;
 	for (int i = 0; i < num_pts; i++) {
 		vec3 p(points + i * n);

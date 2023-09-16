@@ -11,19 +11,30 @@
 #include "drawable.h"
 #include <map>
 
-
+/*Maps or unmaps keys + actions to functions, and holds information regarding the 
+* respective function for a key and action pair. 
+* 
+* Keys and actions must be identified with GLFW macros.  Look at GLFW docs for 
+* more info.
+*/
 class KeyManager {
 private:
 	map<pair<int, int>, std::function<void()>> keymap;
 public:
 	KeyManager() {}
 	//maps function to key action
-	void mapKeyFunc(int key, int action, std::function<void()> func) { keymap.insert({ {key,action},func }); }
-	void unmapKey(int key, int action) { keymap.erase({ key,action }); }
+	void map(int key, int action, std::function<void()> func) { keymap.insert({ {key,action},func }); }
+	void unmap(int key, int action) { keymap.erase({ key,action }); }
 	//calls function for key action, if one exists  
 	void callKeyFunc(int key, int action);
 };
 
+/*Manages camera operations for BaseViewWindow. Updates to position and 
+* orientation are performed on "_updater_thread."
+*
+* For this to work, attach(Camera*) must be called on a camera instance
+* to allow this class to update it. 
+*/
 class CameraManager {
 private:
 	thread _updater_thread;
@@ -34,8 +45,10 @@ private:
 	void _update_loop();
 public:
 
+	/*Camera will move in this direction each camera update. Camera::translate()
+	* is called with motion_dir as the argument.*/
 	vec3 motion_dir = { 0,0,0 };
-	double movespeed = 0.00001;
+	double movespeed = 0.00008;
 	double camspeed = 0.004;
 
 	CameraManager() {}
@@ -52,7 +65,14 @@ public:
 };
 
 /*
-* GLFW window for viewing scenes with a camera.
+* Provides a base for creating windows with GLFW.  Natively handles keyboard
+* input, mouse input, and camera controls.  By default, moves camera with WASD
+* and mouse.  
+* 
+* IMPORTANT: The pure virtual function "_main()" is meant to contain the body 
+* of the program running in the window.  Some initialization is done before this
+* is called.  
+*
 */
 class BaseViewWindow {
 protected:
@@ -78,9 +98,13 @@ protected:
 
 	//Main loop of program. 
 	virtual void _main() = 0;
+
+	//callback for keyboard input event
 	static void _keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	//callback for cursor position update event
 	static void _cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 	void _enableMouseControls();
+	void _mapMovementKeys();
 
 public:
 	BaseViewWindow(
@@ -97,9 +121,6 @@ public:
 	);
 
 	void close();
-
-	//void createShader
-
 };
 
 

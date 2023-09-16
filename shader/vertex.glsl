@@ -14,17 +14,17 @@ out vec3 frag_color;
 out vec3 frag_pos;
 out vec3 normal;
 
+
 void main() {
-	
 	vec4 v_pos_new = geom_model*vec4(v_pos,1);
 	vec4 normal_new = geom_model*vec4(v_normal,0);
 	
 	//lighting is based on geometry transformations
 	normal = vec3(normal_new);
-	frag_color = color;
+	frag_color = color; 
 	frag_pos = vec3(v_pos_new);
 	
-	//now we calculate camera position
+	//now we do camera transformations
 	v_pos_new = cam_projection*cam_modelview * v_pos_new;
 
 	float w = v_pos_new.z/near_dist;

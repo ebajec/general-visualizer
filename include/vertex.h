@@ -2,7 +2,8 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 #include "matrix.h"
-#include "linked_list.h"
+//#include "linked_list.h"
+#include <queue>
 #include "misc.h"
 #include <unordered_set>
 #include <GL/glew.h>
@@ -123,14 +124,15 @@ struct Face : public MeshElem {
 
 template<typename func>
 void bfs(Vertex* start, func s) {
-	linked_list<Vertex> queue;
+	std::queue<Vertex*> queue;
 	unordered_set<Vertex*> visited;
 
 	queue.push(start);
 	visited.insert(start);
 
-	while (queue.head != nullptr) {
-		Vertex* dequeued = (Vertex*)queue.pop();
+	while (!queue.empty()) {
+		Vertex* dequeued = (Vertex*)queue.front();
+		queue.pop();
 		s(dequeued);
 
 		//Mark connections as visited and add unvisited to queue

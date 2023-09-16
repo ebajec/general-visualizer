@@ -29,6 +29,10 @@ public:
 
 	void connectUniforms(const ShaderProgram& shader);
 	void rotate(float pitch, float yaw);
+	/*Moves camera in direction delta. THIS IS CURRENTLY BROKEN. 
+	* Must be fixed to use a projection of the camera coordinates 
+	* instead of actual ones.
+	*/
 	void translate(vec3 delta);
 	void reset();
 private:

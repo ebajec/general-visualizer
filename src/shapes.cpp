@@ -78,27 +78,27 @@ Vertex** genLattice(int N, int L) {
 	return layers;
 }
 
-Vertex* genPolygon(int penis) {
+Vertex* genPolygon(int size) {
 	int N = 6;
-	Vertex** lattice_front = genLattice(N, penis);
-	Vertex** lattice_back = genLattice(N, penis + 1);
+	Vertex** lattice_front = genLattice(N, size);
+	Vertex** lattice_back = genLattice(N, size + 1);
 
-	for (int n = 0; n <= penis; n++) {
+	for (int n = 0; n <= size; n++) {
 		for (int i = 0; i < N * n; i++) {
-			lattice_front[n][i].position = lattice_front[n][i].position + ROOT3OVER2 * (penis - n + 1) * vec3 { 0, 0, 1 };
-			lattice_back[n][i].position = lattice_back[n][i].position - ROOT3OVER2 * (penis - n + 1) * vec3 { 0, 0, 1 };
+			lattice_front[n][i].position = lattice_front[n][i].position + ROOT3OVER2 * (size - n + 1) * vec3 { 0, 0, 1 };
+			lattice_back[n][i].position = lattice_back[n][i].position - ROOT3OVER2 * (size - n + 1) * vec3 { 0, 0, 1 };
 		}
 	}
 
-	lattice_front[0][0].position = vec3{ 0, 0, ROOT3OVER2 * (penis + 1) };
-	lattice_back[0][0].position = -1 * vec3{ 0, 0, ROOT3OVER2* (penis + 1) };
+	lattice_front[0][0].position = vec3{ 0, 0, ROOT3OVER2 * (size + 1) };
+	lattice_back[0][0].position = -1 * vec3{ 0, 0, ROOT3OVER2* (size + 1) };
 
-	int n = penis;
+	int n = size;
 	for (int i = 0; i < N * n; i++) {
 		Vertex* point = (lattice_front[n] + i);
 
 		if (i % n == 0) {
-			int c_i = i + i / penis;
+			int c_i = i + i / size;
 			int next_layer_size = N * (n + 1);
 			point->connect(
 				lattice_back[n + 1] + modulo(c_i - 1, next_layer_size),
@@ -109,8 +109,8 @@ Vertex* genPolygon(int penis) {
 		else {
 			int c_i = i + (i - i % n) / n;
 			point->connect(
-				lattice_back[penis + 1] + c_i,
-				lattice_back[penis + 1] + c_i + 1
+				lattice_back[size + 1] + c_i,
+				lattice_back[size + 1] + c_i + 1
 			);
 		}
 	}
