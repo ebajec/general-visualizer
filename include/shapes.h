@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 #include "vertex.h"
-#include "linked_list.h"
 #include <unordered_set>
 #include <complex>
 #include <vector>

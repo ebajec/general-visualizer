@@ -3,7 +3,6 @@
 
 #include "mesh.h"
 #include "math.h"
-#include "linked_list.h"
 #include <forward_list>
 #include <unordered_set>
 #include <queue>

@@ -2,7 +2,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "shader.h"
-#include "linked_list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,58 +11,7 @@
 
 #define MAX_LINE_LENGTH 100
 
-/*I was previously using this function to read files, but it does not work on
-all platforms for some reason.*/
-inline char* read_text_file(FILE* file) {
-	if (file == nullptr) {
-		return nullptr;
-	}
-
-	char line[MAX_LINE_LENGTH];
-	linked_list<char> line_list;
-
-	size_t total_size = 0;
-
-	while (fgets(line, MAX_LINE_LENGTH, file)) {
-		size_t line_length = strlen(line);
-		char* newline = (char*)malloc((line_length + 1) * sizeof(char));
-
-		if (newline == nullptr) {
-			return nullptr;
-		}
-
-		strcpy(newline, line);
-		line_list.push(newline);
-		total_size += line_length;
-	}
-
-
-
-	char* text = (char*)malloc((total_size + 1) * sizeof(char));
-
-	int counter = 0;
-
-	node<char>* current = line_list.head;
-
-	while (current != nullptr) {
-		char* line = (char*)current->address;
-		size_t size = strlen(line);
-
-		for (int i = 0; i < size; i++) {
-			text[counter + i] = line[i];
-		}
-		counter += size;
-		current = current->next;
-	}
-
-	text[counter] = '\0';
-
-	line_list.destroy("t");
-
-	return text;
-}
-
-inline string read_text_file_2(const char* src){
+inline string read_text_file(const char* src){
 	ifstream file(src);
 
 	if (!file.is_open()) {
@@ -92,8 +40,8 @@ ShaderProgram::ShaderProgram(const char* vertex_shader_path, const char* fragmen
 	//fragment_shader_data = fopen(fragment_shader_path, "r");
 	//vertex_shader_data = fopen(vertex_shader_path, "r");
 
-	string vertex_shader_source = read_text_file_2(vertex_shader_path);
-	string fragment_shader_source = read_text_file_2(fragment_shader_path);
+	string vertex_shader_source = read_text_file(vertex_shader_path);
+	string fragment_shader_source = read_text_file(fragment_shader_path);
 
 	if (fragment_shader_source == "" || vertex_shader_source == "") {
 		fprintf(stderr, "ERROR: could not open shader files\n");
@@ -162,15 +110,12 @@ void ShaderProgram::_compileShader(GLenum type, const char* source)
 computeShader::computeShader(const char* shader_path) {
 	init();
 
-	FILE* shader_data;
-	shader_data = fopen(shader_path, "r");
+	const char* shader_source = read_text_file(shader_path).c_str();
 
-	if (shader_data == NULL) {
+	if (shader_source == "") {
 		fprintf(stderr, "ERROR: could not open shader files\n");
 		glfwTerminate();
 	}
-
-	const char* shader_source = read_text_file(shader_data);
 
 	_compileShader(GL_COMPUTE_SHADER, shader_source);
 
