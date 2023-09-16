@@ -19,7 +19,17 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 #if you built glfw from source files, add the path to the root directory
 #for glfw here
-add_subdirectory(../../../glfw build)
+set(GLFW_ROOT_DIR ../../../glfw )
+
+#link GLEW differently depending on platform
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(GLEW_LIB ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(GLEW_LIB GLEW)
+else ()
+endif ()
+
+add_subdirectory(${GLFW_ROOT_DIR} build)
 
 find_package(OpenGL REQUIRED)
 
@@ -27,6 +37,6 @@ find_package(OpenGL REQUIRED)
 add_executable(visualizer ${SOURCES})
 
 target_link_libraries(visualizer glfw)
-target_link_libraries(visualizer ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
+target_link_libraries(visualizer ${GLEW_LIB})
 target_link_libraries(visualizer OpenGL::GL)
 
