@@ -34,6 +34,7 @@ public:
 	void computeNormals();
 	void setType(ShapeType type);
 
+	//checks V - E + F to assess whether meshes are being processed properly
 	void checkChar();
 
 	// F must be a lambda taking in an argument the size of each object in the buffer
