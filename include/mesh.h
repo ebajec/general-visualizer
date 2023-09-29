@@ -28,12 +28,13 @@ public:
 
 	~Mesh();
 
-	void initBuffers(GLenum usage);
-	void reinitBuffer(GLenum usage, unsigned int attribute);
+	void refreshBuffer(GLenum usage, unsigned int attribute);
 	void center();
 	void colorCurvature();
 	void computeNormals();
 	void setType(ShapeType type);
+
+	void checkChar();
 
 	// F must be a lambda taking in an argument the size of each object in the buffer
 	template<typename func> void transformBuffer(VERTEX_ATTRIBUTE attribute, func F);
@@ -53,7 +54,7 @@ protected:
 	ShapeType _type = TRIANGLE;
 
 	void _init();
-	unsigned long _objectCount();
+	unsigned long _pointCount();
 	void _findFacesTriangular();
 	void _findEdges();
 	void _copyAttributes(float** attribute_buffers);

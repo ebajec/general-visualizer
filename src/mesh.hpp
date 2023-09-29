@@ -152,7 +152,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 	};
 
 	switch (genus) {
-		//equivalent to sphere
+	//equivalent to sphere
 	case 2:
 		size = (N_s - 1) * N_t + 2; // +2 for bottom point and top point (i.e., infinity)
 		gen_vertices(size);
@@ -168,6 +168,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 		};
 
 		break;
+	//works for disks.
 	case 1:
 		size = N_s * N_t;
 		gen_vertices(size);
@@ -195,6 +196,19 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 		};
 
 		break;
+	//idk just adding this
+	case -1:
+		size = N_s * N_t;
+		gen_vertices(size);
+		quot = [=](int i, int j) {
+			return pair<int, int>(i - (i >= N_s), j - (j>= N_t));
+		};
+
+		indexer = [=](pair<int, int> ind) {
+			return ind.first * N_t + ind.second;
+		};
+
+		break;
 	}
 
 	for (int i = 0; i < N_s; i++) {
@@ -214,7 +228,16 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 
 			current->connect(next_s);
 			current->connect(next_t);
-			current->connect(diag);
+			//current->connect(diag);
+		}
+	}
+
+	for (Vertex* v : _vertex_list) {
+		for (Vertex* w : v->connections) {
+			vec3 diff = v->position - w->position;
+			if (sqrt(dot(diff,diff)) > 100) {
+				v->disconnect(w);
+			}
 		}
 	}
 
@@ -239,7 +262,7 @@ void Mesh::center() {
 	}
 }
 
-unsigned long Mesh::_objectCount() {
+unsigned long Mesh::_pointCount() {
 	switch (_type) {
 	case LINE:
 		return 2 * _edge_list.size();
@@ -251,11 +274,8 @@ unsigned long Mesh::_objectCount() {
 	return 0;
 }
 
-void Mesh::initBuffers(GLenum usage) {
-	this->Drawable<VERTEX_ATTRIBUTES>::initBuffers(usage);
-}
 
-void Mesh::reinitBuffer(GLenum usage, unsigned int attribute)
+void Mesh::refreshBuffer(GLenum usage, unsigned int attribute)
 {
 
 	//float* mem = new float[_primitive_sizes[attribute] * _object_count](0);
@@ -294,7 +314,7 @@ void Mesh::transformBuffer(VERTEX_ATTRIBUTE attribute, func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
 	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	transform_pts_3_lam<func>(mem, _objectCount(), F);
+	transform_pts_3_lam<func>(mem, _pointCount(), F);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -521,5 +541,14 @@ void Mesh::setType(ShapeType type)
 	}
 }
 
+inline void Mesh::checkChar()
+{
+	int euler = _vertex_list.size() - _edge_list.size() + _face_list.size();
+
+	printf("V = %d\n",_vertex_list.size());
+	printf("E = %d\n",_edge_list.size());
+	printf("F = %d\n",_face_list.size());
+	printf(" V - E + F = %d\n", euler);
+}
 
 #endif

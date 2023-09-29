@@ -15,43 +15,32 @@
 using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 
-#define WINDOW_HEIGHT 540
-#define WINDOW_WIDTH 960 
+#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 1920 
 
 typedef std::complex<double> C;
+
+int DRAW_AMOUNT = 20000;
 
 class programWindow : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
+		
+		//random function
+		Mesh graph(Surface([=](float s, float t) {
+			double a = 10 - s; double b = 10 - t;
+			C z = a + b*1i;
+			C f = (z*z)/(exp(z) - (C)2);
+			return 10*vec3{(float)real(f),(float)real(z),(float)imag(f)};
 
-		//disk 
-		Mesh disk(Surface([](float s, float t) {
-			std::complex<double> z = (double)s*exp(((double)t)*1i);
+			}, 20, 20), -1, 400, 400);
 
-			return vec3{(float)real(z),0,(float)imag(z)};
-
-		}, 1, 2*PI), 1, 100, 100);
-
-		//morphed disk
-		Mesh graph(Surface([](float s, float t) {
-			std::complex<double> z = (double)(s)*exp(((double)t)*1i);
-			std::complex<double> f = (z-(C)1)*((C)2*z*z+2i)/(z-(C)2);
-
-			return 10.0f*vec3{(float)real(f),(float)real(z),(float)imag(f)};
-
-			}, 1.0f, 2*PI), 1, 100, 100);
 		graph.setType(LINE);
 		graph.initBuffers(GL_STREAM_DRAW);
+		
 
-		disk.initBuffers(GL_STREAM_DRAW);
-
-		//this is only to test out keyboard input 
-		auto movshape = [&]() {
-			graph.transformAffine(rotateyz<GLfloat>(PI / 12));
-			return;
-		};
-		_key_manager.map(GLFW_KEY_R, GLFW_PRESS, movshape);
+		graph.checkChar();
 
 		//main loop
 		while (!glfwWindowShouldClose(_window)) {
@@ -59,16 +48,11 @@ protected:
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
 		
-			disk.draw(_main_shader);
 			graph.draw(_main_shader);
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
-		
-		//if a key mapping references out-of-scope variables, it will break
-		//the program. So we must make sure to unmap any keys bound here.
-		_key_manager.unmap(GLFW_KEY_R, GLFW_PRESS);
 	}
 
 	
@@ -96,6 +80,12 @@ int main() {
 		else if (command == "launch" && !window.isRunning()) window.launch("test", NULL, NULL);
 
 		else if (command == "close" && window.isRunning()) window.close();
+
+		else if (command == "setcount") {
+			int val;
+			std::cin >> val;
+			DRAW_AMOUNT = val; 
+		}
 
 		else std::cout << "invalid command\n";
 

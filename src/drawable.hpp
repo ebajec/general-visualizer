@@ -4,12 +4,14 @@
 #include "drawable.h"
 
 template<unsigned int NUM_ATTRIBUTES>
-void Drawable<NUM_ATTRIBUTES>::draw(ShaderProgram shader,float t)
+void Drawable<NUM_ATTRIBUTES>::draw(ShaderProgram shader,int count)
 {
+	if (count > _pointCount()/3) count = _pointCount()/3;
+	if (count == -1) count = _pointCount()/3;
 	glUseProgram(shader.program);
 	shader.setUniform("geom_model", _model, GL_TRUE);
 	glBindVertexArray(_vao);
-	glDrawArrays(_draw_mode, 0, (int)(t*(float)_objectCount()));
+	glDrawArrays(_draw_mode, 0, 3*count);
 	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
 }
 
