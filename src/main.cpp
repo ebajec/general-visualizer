@@ -20,7 +20,7 @@ using mat3 = matrix<3, 3, GLfloat>;
 
 typedef std::complex<double> C;
 
-int DRAW_AMOUNT = 20000;
+int DRAW_AMOUNT = 1;
 
 class programWindow : public BaseViewWindow {
 protected:
@@ -29,17 +29,12 @@ protected:
 		
 		//random function
 		Mesh graph(Surface([=](float s, float t) {
-			double a = 10 - s; double b = 10 - t;
-			C z = a + b*1i;
-			C f = (z*z)/(exp(z) - (C)2);
-			return 10*vec3{(float)real(f),(float)real(z),(float)imag(f)};
+			return Torus(2.0f,1.0f)(s,t);
+			}, 2*PI, 2*PI), 2, 200, 150);
 
-			}, 20, 20), -1, 400, 400);
-
-		graph.setType(LINE);
+		//graph.setType(LINE);
 		graph.initBuffers(GL_STREAM_DRAW);
-		
-
+	
 		graph.checkChar();
 
 		//main loop
@@ -47,9 +42,9 @@ protected:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
-		
-			graph.draw(_main_shader);
 
+			graph.draw(_main_shader);
+			//graph.transformAffine(rotatexz<GLfloat>(PI/2024));
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
