@@ -42,7 +42,7 @@ public:
 
 	//F must be a lambda taking in a pointer to a vertex
 	template<typename func> void transformVertices(func F);
-
+	unsigned long _pointCount();
 protected:
 	vector<Vertex*> _vertex_list;
 	list<Face*> _face_list;
@@ -55,7 +55,8 @@ protected:
 	ShapeType _type = TRIANGLE;
 
 	void _init();
-	unsigned long _pointCount();
+	
+	void _findFacesTriangular2();
 	void _findFacesTriangular();
 	void _findEdges();
 	void _copyAttributes(float** attribute_buffers);

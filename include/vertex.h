@@ -2,12 +2,13 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 #include "matrix.h"
-//#include "linked_list.h"
 #include <queue>
 #include "misc.h"
 #include <unordered_set>
+#include <unordered_map>
 #include <GL/glew.h>
 #include <vector>
+#include <forward_list>
 
 
 #define VERTEX_ATTRIBUTES 4
@@ -24,12 +25,12 @@ enum VERTEX_ATTRIBUTE {
 //Vertex
 using vec3 = matrix<3, 1, GLfloat>;
 
-struct Vertex;
-struct MeshElem;
-struct Edge;
-struct Face;
+class Vertex;
+class VertexRelation;
+class Edge;
+class Face;
 
-struct Vertex {
+class Vertex {
 public:
 
 	struct comparator {
@@ -44,7 +45,8 @@ public:
 	vec3 normal;
 	vec3 color = { 1.0f,1.0f,1.0f };
 	unordered_set<Vertex*> connections;
-	unordered_set<Face*> adjacent_faces;
+	unordered_set<Face*> faces;
+	unordered_map<Vertex*,Edge*> edges;
 
 	Vertex() { degree = 0; }
 	Vertex(const vec3& v, const vec3& normal, const vec3& color = { 1.0f,1.0f,1.0f });
@@ -56,8 +58,6 @@ public:
 	void connect(Vertex* arg, Args... args);
 	template<typename... Args>
 	void disconnect(Vertex* arg, Args... args);
-	//template<typename func>
-	//void transform(func f);
 
 	size_t deg() { return degree; }
 
@@ -66,11 +66,17 @@ private:
 	size_t degree;
 };
 
+inline void common_edge(Vertex* v1, Vertex* v2) {
 
-//Mesh elements
+}
+
+
 using mat3 = matrix<3, 3, GLfloat>;
 
-struct MeshElem {
+
+//this is used to represent face and edge relationships between vertices
+//
+class VertexRelation {
 
 public:
 	vector<Vertex*> vertexArray() const { return _vertices; }
@@ -79,7 +85,7 @@ public:
 	Vertex** data() const { return (Vertex**)_vertices.data(); }
 
 	struct Hasher {
-		size_t operator () (const MeshElem* E) const;
+		size_t operator () (const VertexRelation* E) const;
 	};
 
 protected:
@@ -87,43 +93,51 @@ protected:
 	vector<Vertex*> _vertices;
 };
 
-/* Stores connectivity data for an edge
-*/
-struct Edge : public MeshElem {
+//Edge representing connecting between two vertices. These are meant to be unique
+//objects in memory for each connection between a pair of vertices.
+class Edge : public VertexRelation {
 public:
 	Edge() { init(); }
 	Edge(Vertex* first, Vertex* second);
 
-	struct Comparator {
-		bool operator () (const MeshElem* E1, const MeshElem* E2) const;
-	};
+	Face* adjacent(Face* F);
+
+	vector<Face*> faces;
 private:
 	void init();
 };
 
-
-/*Stores connectivity data for a face. */
-struct Face : public MeshElem {
+//Represents a face formed by a set of vertices.
+class Face : public VertexRelation {
+public:
 	Face() { _size = 0; }
 
 	Face(std::initializer_list<Vertex*> args);
 
 	struct Comparator {
-		bool operator () (const MeshElem* F1, const MeshElem* F2) const;
+		bool operator () (const VertexRelation* F1, const VertexRelation* F2) const;
 	};
 
-	void computeNormal() {
-		vec3 v1 = _vertices[1]->position - _vertices[0]->position;
-		vec3 v2 = _vertices[2]->position - _vertices[0]->position;
-		normal = cross(v1, v2);
-	}
+	void computeNormal();
 
-	vector<Edge> adjacent_edges;
+	vector<Edge*> edges;
 	vec3 normal = { 0,0,0 };
 };
 
+inline forward_list<Vertex*> common_vertices(Vertex* v, Vertex* w) {
+	forward_list<Vertex*> common;
+	for (Vertex* cv : v->connections) {
+		for (Vertex* cw : w->connections) {
+			if (cv == cw) {
+				common.push_front(cv);
+			}
+		}
+	}
+	return common;
+}
+
 template<typename func>
-void bfs(Vertex* start, func s) {
+inline void bfs(Vertex* start, func s) {
 	std::queue<Vertex*> queue;
 	unordered_set<Vertex*> visited;
 

@@ -2,6 +2,7 @@
 //#define VERTEX_HPP
 #include "vertex.h"
 
+
 Vertex::Vertex(const vec3& v, const vec3& normal, const vec3& color)
 {
 	this->color = color;
@@ -15,14 +16,12 @@ Vertex::~Vertex() {
 		if (v != nullptr) v->connections.erase(this);
 	}
 
-	for (Face* F : adjacent_faces) {
+	for (Face* F : faces) {
 		for (Vertex* v : F->vertexArray()) {
-			if (v != this) v->adjacent_faces.erase(F);
+			if (v != this) v->faces.erase(F);
 		}
 	}
 }
-
-
 
 void Vertex::connect(Vertex* other)
 {
@@ -33,6 +32,16 @@ void Vertex::connect(Vertex* other)
 	else {
 		this->connections.insert(other);
 		other->connections.insert(this);
+
+		Edge* E = new Edge(this, other);
+
+		//auto common = common_vertices(this,other);
+		//if(!common.empty()) {
+		//	for (Vertex* v : common) {
+		//		Face* F = new Face({this,v,other});
+		//	}
+		//}
+
 		this->degree++;
 		other->degree++;
 	}
@@ -46,9 +55,14 @@ void Vertex::disconnect(Vertex* other)
 		return;
 	}
 	else {
+		Edge* E = this->edges.at(other);
+		other->edges.erase(this);
+		this->edges.erase(other);
 		this->connections.erase(other);
 		other->connections.erase(this);
 		this->degree--;
+
+		delete(E);
 	}
 	return;
 }
@@ -83,9 +97,20 @@ Edge::Edge(Vertex* first, Vertex* second) {
 	init();
 	this->_vertices[0] = first;
 	this->_vertices[1] = second;
+	first->edges.insert({second,this});
+	second->edges.insert({first,this});
 }
 
-size_t MeshElem::Hasher::operator () (const MeshElem* E) const {
+//Returns adjacent face to F on an edge, and nullptr if there is none.
+Face* Edge::adjacent(Face* F) {
+	Face* adj = nullptr;
+
+	for (Face* F_other : faces) {
+		if (F_other != F) return F_other;
+	}
+}
+
+size_t VertexRelation::Hasher::operator () (const VertexRelation* E) const {
 
 	size_t pointer_sum = 0;
 	//modulo UNINT64_MAX/size is to avoid overflow
@@ -94,29 +119,40 @@ size_t MeshElem::Hasher::operator () (const MeshElem* E) const {
 	return pointer_sum;
 }
 
-bool Edge::Comparator::operator () (const MeshElem* E1, const MeshElem* E2) const {
-	return (E1->get(0) == E2->get(0) && E1->get(1) == E2->get(1)) || (E1->get(0) == E2->get(1) && E1->get(1) == E2->get(0));
-}
 
 //FACE
 Face::Face(std::initializer_list<Vertex*> args) {
 	this->_size = args.size();
 	this->_vertices = vector<Vertex*>(_size);
-	this->adjacent_edges = vector<Edge>(_size);
-
-	int i = 0;
-	for (Vertex* v : args) {
+	this->edges = vector<Edge*>(_size);
+	
+	{int i = 0; for (Vertex* v : args) {
 		_vertices[i] = v;
-		v->adjacent_faces.insert(this);
+		v->faces.insert(this);
 		i++;
-	}
+	}}
+
+
 	for (int i = 0; i < _size; i++) {
-		adjacent_edges[i] = Edge(_vertices[i], _vertices[(i + 1) % (_size)]);
+		Vertex* v = _vertices[i];
+		for (Vertex* w : v->connections) {
+			if (w == _vertices[modulo(i+1,_size)]) {
+				Edge* E = v->edges.at(w);
+				edges[i] = E;
+				E->faces.push_back(this);
+				break;
+			}
+		}
 	}
-}
+}	
+ void Face::computeNormal() {
+	vec3 v1 = _vertices[1]->position - _vertices[0]->position;
+	vec3 v2 = _vertices[2]->position - _vertices[0]->position;
+	normal = cross(v1, v2);
+ }
 
 
-bool Face::Comparator::operator () (const MeshElem* F1, const MeshElem* F2)  const {
+bool Face::Comparator::operator () (const VertexRelation* F1, const VertexRelation* F2)  const {
 	if (F1->size() != F2->size()) return false;
 
 	int size = F1->size();

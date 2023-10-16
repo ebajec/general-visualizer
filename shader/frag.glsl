@@ -29,5 +29,5 @@ void main()
 
     vec3 color = calc_light(light1,frag_color) + calc_light(light2,frag_color) + calc_light(light3,frag_color);
 
-    FragColor = vec4(frag_color,1);
+    FragColor = vec4(color,1);
 } 

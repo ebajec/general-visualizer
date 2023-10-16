@@ -8,6 +8,7 @@ void Drawable<NUM_ATTRIBUTES>::draw(ShaderProgram shader,int count)
 {
 	if (count > _pointCount()/3) count = _pointCount()/3;
 	if (count == -1) count = _pointCount()/3;
+
 	glUseProgram(shader.program);
 	shader.setUniform("geom_model", _model, GL_TRUE);
 	glBindVertexArray(_vao);

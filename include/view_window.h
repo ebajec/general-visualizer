@@ -23,7 +23,7 @@ private:
 public:
 	KeyManager() {}
 	//maps function to key action
-	void map(int key, int action, std::function<void()> func) { keymap.insert({ {key,action},func }); }
+	void mapKey(int key, int action, std::function<void()> func) { keymap.insert({ {key,action},func }); }
 	void unmap(int key, int action) { keymap.erase({ key,action }); }
 	//calls function for key action, if one exists  
 	void callKeyFunc(int key, int action);

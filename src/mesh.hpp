@@ -3,7 +3,6 @@
 
 #include "mesh.h"
 #include "math.h"
-#include <forward_list>
 #include <unordered_set>
 #include <queue>
 #include <functional>
@@ -188,7 +187,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 		gen_vertices(size);
 
 		quot = [=](int i, int j) {
-			return pair<int, int>((i != N_s) * i, (j != N_t) * j);
+			return pair<int, int>(modulo(i,N_s), modulo(j ,N_t));
 		};
 
 		indexer = [=](pair<int, int> ind) {
@@ -228,14 +227,14 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 
 			current->connect(next_s);
 			current->connect(next_t);
-			//current->connect(diag);
+			current->connect(diag);
 		}
 	}
 
 	for (Vertex* v : _vertex_list) {
 		for (Vertex* w : v->connections) {
 			vec3 diff = v->position - w->position;
-			if (sqrt(dot(diff,diff)) > 100) {
+			if (sqrt(dot(diff,diff)) > 200) {
 				v->disconnect(w);
 			}
 		}
@@ -331,7 +330,7 @@ void Mesh::_copyAttributes(float** attribute_buffers)
 	int counter = 0;
 
 	//copy vertex data to respective memory block before copying to buffer
-	auto copy_attributes = [&](MeshElem* E) {
+	auto copy_attributes = [&](VertexRelation* E) {
 		vector<Vertex*> vertices = E->vertexArray();
 
 		for (Vertex* v : vertices) {
@@ -370,20 +369,29 @@ void Mesh::_copyAttributes(float** attribute_buffers)
 	}
 }
 
-void Mesh::_findFacesTriangular() {
-	auto common_vertices = [](Vertex* v, Vertex* w) {
-		forward_list<Vertex*> common;
+void Mesh::_findFacesTriangular2() {
+	unordered_set<Face*> faces;
 
-		for (Vertex* cv : v->connections) {
-			for (Vertex* cw : w->connections) {
-				if (cv == cw) {
-					common.push_front(cv);
-				}
-			}
+	auto add_faces = [&](Vertex* v) {
+		for (Face* F : v->faces) {
+			faces.insert(F);
 		}
-		return common;
 	};
 
+	bfs(_vertex_list[0],add_faces);
+
+	for (Face* F : faces) {
+		_face_list.push_back(F);
+	}
+	int i = 0;
+	for (Face* F : _face_list) {
+		_face_indices.insert({ F, i });
+		i++;
+	}
+	return;
+}
+
+void Mesh::_findFacesTriangular() {
 	auto find_adjacent_face = [](Vertex* v) {
 		Vertex* w = *(v->connections.begin());
 
@@ -399,11 +407,11 @@ void Mesh::_findFacesTriangular() {
 	int temp = 1;
 	auto common = common_vertices(_vertex_list[0], _vertex_list[temp]);
 
+	//search for faces until common_vertices returns a nonempty list
 	while (std::distance(common.begin(), common.end()) == 0) {
-		if (temp == _vertex_list.size()) return;
-
-		common = common_vertices(_vertex_list[0], _vertex_list[temp]);
 		temp++;
+		if (temp == _vertex_list.size()) return;
+		common = common_vertices(_vertex_list[0], _vertex_list[temp]);
 	}
 
 	Face* F_0 = new Face({ _vertex_list[0], *common.begin() ,_vertex_list[temp] });
@@ -418,24 +426,26 @@ void Mesh::_findFacesTriangular() {
 	//throw exception if none exist
 	if (F_0->size() == 0) return;
 
-	unordered_set<Edge*, Edge::Hasher, Edge::Comparator> visited_edges;
+	unordered_set<Edge*, Edge::Hasher> visited_edges;
 
 	queue<Face*> face_queue;
 	face_queue.push(F_0);
 	this->_face_list.push_back(F_0);
 
+	float c = 0.0f;
+	int z = 0;
 	while (!face_queue.empty()) {
 		Face* F = face_queue.front();
 		face_queue.pop();
 
 		//loop through edges of face
-		for (Edge& E : F->adjacent_edges) {
+		for (Edge* E : F->edges) {
 			//mark them as visited as we go through;
-			if (visited_edges.find(&E) == visited_edges.end()) {
-				visited_edges.insert(&E);
+			if (visited_edges.find(E) == visited_edges.end()) {
+				visited_edges.insert(E);
 
-				Vertex* edge_start = E.get(0);
-				Vertex* edge_end = E.get(1);
+				Vertex* edge_start = E->get(0);
+				Vertex* edge_end = E->get(1);
 
 				//identify common vertex for endpoints of our edge which is
 				//not already part of F
@@ -451,11 +461,16 @@ void Mesh::_findFacesTriangular() {
 				//make new face and add to queue if the previous part succeeds
 				if (common != nullptr) {
 					Face* face_new = new Face({ edge_start,common,edge_end });
+					for (Vertex* v : face_new->vertexArray()) {
+						//v->color = vec3{c,c,c};
+					}
 					this->_face_list.push_back(face_new);
 					face_queue.push(face_new);
 				}
 			}
+			c += 0.001;
 		}
+		z++;
 	}
 
 	//this is to save computation time later
@@ -485,8 +500,7 @@ void Mesh::_findEdges() {
 		//Mark connections as visited and add unvisited to queue
 		for (Vertex* v : dequeued->connections) {
 			if (prev_dequeued.find(v) == prev_dequeued.end()) {
-				Edge* E = new Edge(v, dequeued);
-				_edge_list.push_back(E);
+				_edge_list.push_back(v->edges.at(dequeued));
 			}
 
 			//Only queue the vertex if insert() returns true for new element insertion
@@ -517,14 +531,11 @@ void Mesh::computeNormals()
 
 	for (Vertex* v : _vertex_list) {
 		vec3 normal_avg = { 0,0,0 };
-		for (Face* F : v->adjacent_faces) {
+		for (Face* F : v->faces) {
 			normal_avg = normal_avg + F->normal;
 		}
 		v->normal = normalize(normal_avg);
 	}
-
-
-
 }
 
 void Mesh::setType(ShapeType type)
