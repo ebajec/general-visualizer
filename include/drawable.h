@@ -16,9 +16,10 @@ public:
   
 	/*Copies data for each vertex attribute into GPU buffers.*/
 	void initBuffers(GLenum usage);
-	virtual void refreshBuffer(GLenum usage, unsigned int attribute) = 0;
 
+    // Applies an affine transformation to the object by multiplying the model matrix by A.  
 	void transformAffine(mat4 A) { _model = _model * A; }
+	void resetTransformations() {_model = mat4(mat3::id());}
 	void draw(ShaderProgram shader, int count = -1);
 
 	void setMode(GLenum mode) { _draw_mode = mode; }
@@ -46,12 +47,10 @@ protected:
 	//Size of a buffer in number of floating point values.  NOT size in bytes.
 	//If the position buffer had 100 points, this would be 100 for.
 	//@param attribute index of vertex buffer object to be sized
-	long unsigned int _bufSize(int attribute) { return _pointCount() * _primitive_sizes[attribute]; }
+	size_t _bufSize(int attribute) { return _pointCount() * _primitive_sizes[attribute]; }
 
 	//define layout map and primitive sizes here
 	virtual void _init() = 0;
-
-	
 
 	/*copies attributes into NUM_ATTRIBUTES blocks of memory in attribute_buffers
 	each block will be of size bufsize(attribute)*/

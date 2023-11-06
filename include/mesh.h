@@ -28,7 +28,6 @@ public:
 
 	~Mesh();
 
-	void refreshBuffer(GLenum usage, unsigned int attribute);
 	void center();
 	void colorCurvature();
 	void computeNormals();
@@ -37,12 +36,20 @@ public:
 	//checks V - E + F to assess whether meshes are being processed properly
 	void checkChar();
 
-	// F must be a lambda taking in an argument the size of each object in the buffer
-	template<typename func> void transformBuffer(VERTEX_ATTRIBUTE attribute, func F);
+	// Retrieves memory from specified attribute buffer on GPU, then passes pointer
+	// and buffer size to F.  F must be a callable object taking a pointer to float 
+	// and an int.   
+	template<typename func> void transformCPU(VERTEX_ATTRIBUTE attribute, func F);
 
-	//F must be a lambda taking in a pointer to a vertex
+	//Directly calls F on each vertex in the mesh.  F must be a callable object 
+	//taking a Vertex pointer.
 	template<typename func> void transformVertices(func F);
+
 	unsigned long _pointCount();
+
+	const list<Face*> faces() {return _face_list;}
+	const list<Edge*> edges() {return _edge_list;}
+
 protected:
 	vector<Vertex*> _vertex_list;
 	list<Face*> _face_list;
@@ -56,7 +63,6 @@ protected:
 
 	void _init();
 	
-	void _findFacesTriangular2();
 	void _findFacesTriangular();
 	void _findEdges();
 	void _copyAttributes(float** attribute_buffers);
