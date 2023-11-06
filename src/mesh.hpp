@@ -167,8 +167,8 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 		};
 
 		break;
-	//works for disks.
-	case 1:
+	//this is equivalent to an annulus, but can visually look like a disk
+	case 69:
 		size = N_s * N_t;
 		gen_vertices(size);
 		quot = [=](int i, int j) {
@@ -196,7 +196,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 
 		break;
 	//idk just adding this
-	case -1:
+	case 1:
 		size = N_s * N_t;
 		gen_vertices(size);
 		quot = [=](int i, int j) {
@@ -274,46 +274,12 @@ unsigned long Mesh::_pointCount() {
 }
 
 
-void Mesh::refreshBuffer(GLenum usage, unsigned int attribute)
-{
-
-	//float* mem = new float[_primitive_sizes[attribute] * _object_count](0);
-
-	//int counter = 0;
-	//auto copy_attributes = [&](mesh_elem* E) {
-	//	vector<vertex*> vertices = E->vertex_array();
-
-	//	for (vertex* v : vertices) {
-	//		_copy_attribute(v, mem, counter, attribute);
-	//		counter++;
-	//	}
-	//};
-
-	//switch (_draw_mode) {
-	//case LINE:
-	//	for (edge* E : _edge_list) {
-	//		copy_attributes(E);
-	//	}
-	//	break;
-
-	//case TRIANGLE:
-	//	for (face* F : _face_list) {
-	//		copy_attributes(F);
-	//	}
-	//	break;
-	//}
-
-	//glBindBuffer(GL_ARRAY_BUFFER, _vbos[attribute]);
-	//glBufferData(GL_ARRAY_BUFFER, _bufsize(attribute) * sizeof(float), mem, usage);
-	//delete[] mem;
-}
-
 template<typename func>
-void Mesh::transformBuffer(VERTEX_ATTRIBUTE attribute, func F) {
+void Mesh::transformCPU(VERTEX_ATTRIBUTE attribute,func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, _bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	transform_pts_3_lam<func>(mem, _pointCount(), F);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->_bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
+	F(mem,this->_bufSize(attribute));
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -369,29 +335,28 @@ void Mesh::_copyAttributes(float** attribute_buffers)
 	}
 }
 
-void Mesh::_findFacesTriangular2() {
-	unordered_set<Face*> faces;
-
-	auto add_faces = [&](Vertex* v) {
-		for (Face* F : v->faces) {
-			faces.insert(F);
+// Given two vertices v, w, finds the first vertex whose address is not contained
+// in exclusions and is common to both v and w.
+// @return first vertex found, nullptr otherwise
+Vertex* find_common_vertex(Vertex* v, Vertex* w, Vertex** exclusions = nullptr, int num_exclusions = 0) {
+	auto common = common_vertices(v,w);
+	while (!common.empty()) {
+		Vertex* v = *common.begin();
+		if (!linear_search(exclusions,num_exclusions,v)) {
+			return v;
 		}
-	};
-
-	bfs(_vertex_list[0],add_faces);
-
-	for (Face* F : faces) {
-		_face_list.push_back(F);
+		common.pop_front();
 	}
-	int i = 0;
-	for (Face* F : _face_list) {
-		_face_indices.insert({ F, i });
-		i++;
-	}
-	return;
-}
+	return (Vertex*)nullptr;
+};
 
+// Finds the triangular faces on mesh in breadth-first order, i.e., the order
+// of a breadth-first traversal on the dual graph of the mesh.  This should run 
+// in most cases where the mesh is not fully triangulated, however it may not 
+// find all faces.  
 void Mesh::_findFacesTriangular() {
+
+	//The next bit is for finding an initial face. 
 	auto find_adjacent_face = [](Vertex* v) {
 		Vertex* w = *(v->connections.begin());
 
@@ -407,7 +372,8 @@ void Mesh::_findFacesTriangular() {
 	int temp = 1;
 	auto common = common_vertices(_vertex_list[0], _vertex_list[temp]);
 
-	//search for faces until common_vertices returns a nonempty list
+	//search for faces until common_vertices returns a nonempty list.
+	//We are also ensuring that the initial face is oriented clockwise.
 	while (std::distance(common.begin(), common.end()) == 0) {
 		temp++;
 		if (temp == _vertex_list.size()) return;
@@ -426,51 +392,60 @@ void Mesh::_findFacesTriangular() {
 	//throw exception if none exist
 	if (F_0->size() == 0) return;
 
-	unordered_set<Edge*, Edge::Hasher> visited_edges;
+	//Now we find all the faces
+	unordered_map<Edge*,bool> visited_edges;
+	for (Edge* E: this->_edge_list) {
+		visited_edges.insert({E,0});
+	}
 
+	// Validates face by checking if any edges are already visited.  By construction
+	// of this algorithm we will have guaranteed that any preexisting face will have
+	// at least one visited edge.
+	auto validate = [&](Face* F) {
+		for (int i = 0; i < F->size(); i++) {
+			Edge* E = F->get(i)->edges.at(F->get((i+1)%(F->size())));
+			if (visited_edges.at(E)) return false;
+		}
+		return true;
+	};
+
+	//Faces are found in breadth-first order, that's what queue is for.
 	queue<Face*> face_queue;
 	face_queue.push(F_0);
 	this->_face_list.push_back(F_0);
 
-	float c = 0.0f;
-	int z = 0;
+	//begin traversing faces
 	while (!face_queue.empty()) {
 		Face* F = face_queue.front();
 		face_queue.pop();
 
-		//loop through edges of face
-		for (Edge* E : F->edges) {
-			//mark them as visited as we go through;
-			if (visited_edges.find(E) == visited_edges.end()) {
-				visited_edges.insert(E);
+		//loop through edges of face.
+		int n = F->size();
+		for (int i = 0; i < n; i++) {
+			Vertex* v_current = F->get(i);
+			Vertex* v_next = F->get((i+1)%n);
+			Edge* E = v_current->edges.at(v_next);
 
-				Vertex* edge_start = E->get(0);
-				Vertex* edge_end = E->get(1);
-
-				//identify common vertex for endpoints of our edge which is
-				//not already part of F
-				Vertex* common = nullptr;
-				forward_list<Vertex*> common_list = common_vertices(edge_start, edge_end);
-				for (Vertex* v : common_list) {
-					if (!linear_search(F->data(), F->size(), v)) {
-						common = v;
-						break;
-					}
-				}
+			if (visited_edges[E] == 0) {
+				
+				Vertex* common = find_common_vertex(v_current,v_next,F->data(),F->size());
 
 				//make new face and add to queue if the previous part succeeds
 				if (common != nullptr) {
-					Face* face_new = new Face({ edge_start,common,edge_end });
-					for (Vertex* v : face_new->vertexArray()) {
-						//v->color = vec3{c,c,c};
+					// Assuming the initial face was ordered clockwise, this will preserve
+					// a clockwise orientation and allow normals to be properly computed.
+					Face* new_face = new Face({ v_current,common,v_next});
+					if (validate(new_face)) {
+						this->_face_list.push_back(new_face);
+						face_queue.push(new_face);
+						visited_edges[E] = 1;
+					}					
+					else {
+						delete new_face;
 					}
-					this->_face_list.push_back(face_new);
-					face_queue.push(face_new);
 				}
 			}
-			c += 0.001;
 		}
-		z++;
 	}
 
 	//this is to save computation time later
@@ -536,6 +511,7 @@ void Mesh::computeNormals()
 		}
 		v->normal = normalize(normal_avg);
 	}
+
 }
 
 void Mesh::setType(ShapeType type)

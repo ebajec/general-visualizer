@@ -81,7 +81,7 @@ class VertexRelation {
 public:
 	vector<Vertex*> vertexArray() const { return _vertices; }
 	Vertex* get(int index) const { return _vertices[index]; }
-	int size() const { return _size; }
+	int size() const { return _vertices.size(); }
 	Vertex** data() const { return (Vertex**)_vertices.data(); }
 
 	struct Hasher {
@@ -89,7 +89,6 @@ public:
 	};
 
 protected:
-	int _size;
 	vector<Vertex*> _vertices;
 };
 
@@ -110,7 +109,7 @@ private:
 //Represents a face formed by a set of vertices.
 class Face : public VertexRelation {
 public:
-	Face() { _size = 0; }
+	Face() {}
 
 	Face(std::initializer_list<Vertex*> args);
 
