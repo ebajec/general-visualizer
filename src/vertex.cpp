@@ -35,13 +35,6 @@ void Vertex::connect(Vertex* other)
 
 		Edge* E = new Edge(this, other);
 
-		//auto common = common_vertices(this,other);
-		//if(!common.empty()) {
-		//	for (Vertex* v : common) {
-		//		Face* F = new Face({this,v,other});
-		//	}
-		//}
-
 		this->degree++;
 		other->degree++;
 	}
@@ -89,7 +82,6 @@ size_t Vertex::hasher::operator ()(const Vertex* v) const {
 
 //EDGE
 void Edge::init() {
-	this->_size = 2;
 	this->_vertices = vector<Vertex*>(2);
 }
 
@@ -122,9 +114,8 @@ size_t VertexRelation::Hasher::operator () (const VertexRelation* E) const {
 
 //FACE
 Face::Face(std::initializer_list<Vertex*> args) {
-	this->_size = args.size();
-	this->_vertices = vector<Vertex*>(_size);
-	this->edges = vector<Edge*>(_size);
+	this->_vertices = vector<Vertex*>(args.size());
+	this->edges = vector<Edge*>(args.size());
 	
 	{int i = 0; for (Vertex* v : args) {
 		_vertices[i] = v;
@@ -133,10 +124,10 @@ Face::Face(std::initializer_list<Vertex*> args) {
 	}}
 
 
-	for (int i = 0; i < _size; i++) {
+	for (int i = 0; i < this->size(); i++) {
 		Vertex* v = _vertices[i];
 		for (Vertex* w : v->connections) {
-			if (w == _vertices[modulo(i+1,_size)]) {
+			if (w == _vertices[modulo(i+1,this->size())]) {
 				Edge* E = v->edges.at(w);
 				edges[i] = E;
 				E->faces.push_back(this);
@@ -144,8 +135,9 @@ Face::Face(std::initializer_list<Vertex*> args) {
 			}
 		}
 	}
-}	
- void Face::computeNormal() {
+}
+	
+void Face::computeNormal() {
 	vec3 v1 = _vertices[1]->position - _vertices[0]->position;
 	vec3 v2 = _vertices[2]->position - _vertices[0]->position;
 	normal = cross(v1, v2);
