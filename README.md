@@ -1,7 +1,7 @@
 # general-visualizer
 Basic 3D rendering components I have made from scratch with OpenGL. Currently, this is able to generate and render meshes for parameterized shapes in 3D. The parameterization must be explicity defined in main.cpp, but I plan to change this. 
 
-My goal here is to create a framework for visualizing mathmatical objects with a high degree of computational freedom.
+My goal here is to create a framework for visualizing mathmatical objects with a high degree of computational freedom, mainly for myself.
 
 **To compile:** In the solution file or makefile, make sure to include a path to "lib" folder from [this repository](https://github.com/ebajec/linear-algebra) as an include directory— this uses the matrix class I made there.  Also, make sure that GLEW and GLFW are installed and properly linked in CMakeLists.txt. I have included the headers and some of the binaries for portability purposes.
 
