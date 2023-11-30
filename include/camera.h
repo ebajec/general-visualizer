@@ -35,9 +35,10 @@ public:
 	*/
 	void translate(vec3 delta);
 	void reset();
-private:
-	int _w_screen;
+	vec3 pos() {return  (_pos - basis[2]*_near_dist);}
+	vec3 coord(int i){return mat3(_model_pitch * _model_yaw)* basis[i];}
 	int _h_screen;
+	int _w_screen;
 
 	GLfloat _near_dist;
 	GLfloat _far_dist;

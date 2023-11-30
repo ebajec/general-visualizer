@@ -40,6 +40,7 @@ public:
 	// and buffer size to F.  F must be a callable object taking a pointer to float 
 	// and an int.   
 	template<typename func> void transformCPU(VERTEX_ATTRIBUTE attribute, func F);
+	template<typename func> void transformPositionsCPU(func F);
 
 	//Directly calls F on each vertex in the mesh.  F must be a callable object 
 	//taking a Vertex pointer.

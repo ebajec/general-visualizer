@@ -279,7 +279,48 @@ void Mesh::transformCPU(VERTEX_ATTRIBUTE attribute,func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
 	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->_bufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	F(mem,this->_bufSize(attribute));
+	(mem,this->_bufSize(attribute));
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+}
+
+//Update each position in GPU buffers as a function of positions in CPU.
+//F must take a vec3 and return a vec3.
+template <typename func>
+void Mesh::transformPositionsCPU(func F)
+{
+	int i = 0;
+
+	auto eval = [&](Vertex* v, float* mem) {
+		vec3 newpos = F(v->position);
+		v->position = newpos;
+		for (int k = 0; k < 3; k++) {
+			mem[i] = *newpos[k];
+			i++;
+		}
+	};
+
+	float* mem;
+	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[POSITION]);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->_bufSize(POSITION) * sizeof(float), GL_MAP_WRITE_BIT);
+
+	switch (_type) {
+		case TRIANGLE:
+			for (Face* E: this->_face_list) {
+				for (Vertex* v : E->vertexArray()) {
+					eval(v,mem);
+				}	
+			}
+		break;
+			
+		case LINE:
+			for (Edge* E: this->_edge_list) {
+				for (Vertex* v : E->vertexArray()) {
+					eval(v,mem);
+				}	
+			}
+		break;
+	}
+
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 

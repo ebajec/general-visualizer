@@ -25,55 +25,34 @@ std::complex<double> to_complex(float a, float b) {
 }
 
 
+
+
+
+
 //This is a small example program where I graph part of the imaginary of a mobius
 //transformation on a disk in the complex plane.
 class programWindow : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		
+
 		//random function
 		Mesh graph(Surface([=](float s, float t) {
+			C z = to_complex(s-1,t-1);
+			return 10*vec3{(float)real(z),0,(float)imag(z)};
 
-			return s*vec3{cos(t),0,sin(t)};
-
-			},5, 2*PI), 69, 50, 50);
+			},2, 2), 1, 100, 100);
 
 		//graph.setType(LINE);
 		graph.initBuffers(GL_STREAM_DRAW);
 		graph.checkChar();
+		draw_count = graph._pointCount();
+		//graph.setMode(GL_POINTS);
 
 		auto mobius = [=](matrix<2,2,C> M, C z) {
 			return (M[0][0]*z + M[0][1])/(M[1][0]*z + M[1][1]);
 		};
 
-
-		//loops through face list and vertices to update positions in GPU
-		//as a function of the initial vertex positions. This graphs the real
-		//part of a mobius transformatio
-		auto F = [&](float* mem, size_t size) {
-			auto faces = graph.faces();
-			int i = 0;
-			float t = pow(sin(glfwGetTime()),2);
-			for (Face* F: faces) {
-				for (Vertex* v : F->vertexArray()) {
-					C z = to_complex(*v->position[0],*v->position[2]);
-					C f = mobius(mobius_mat,z);
-
-					vec3 newpos = {(float)real(z),(float)real(f),(float)imag(z)};
-
-					for (int k = 0; k < 3; k++) {
-						mem[i] = *newpos[k];
-						i++;
-					}
-				}	
-			}
-		};
-
-		graph.transformCPU(POSITION,F);
-
-
-		draw_count = graph._pointCount();
 		//main loop
 		while (!glfwWindowShouldClose(_window)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -81,7 +60,13 @@ protected:
 			_cam.connectUniforms(_main_shader);
 
 			graph.draw(_main_shader,draw_count);
-			graph.transformCPU(POSITION,F);
+
+			graph.transformPositionsCPU([&](vec3 v) {
+				C z = to_complex(*v[0],*v[2]);
+				C f = mobius(this->mobius_mat,z);
+				return vec3{(float)real(z),(float)imag(f),(float)imag(z)};
+			});
+			
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
@@ -89,10 +74,11 @@ protected:
 
 	
 public:
-	size_t draw_count = 1000;
+	//this is just for debugging and lets you specify how many primitives to draw
+	size_t draw_count = 0;
 
 	matrix<2,2,C> mobius_mat = {
-			2,1,
+			2,-5,
 			3,1
 		};
 	//one day something will be here
@@ -107,11 +93,12 @@ int main() {
 
 	std::string command;
 
+	//move the poles of the mobius transformation
 	auto move_mobius = [&]() {
 		while (true) {
 			window.mobius_mat = {
-			(C)10*cos(glfwGetTime()),1,
-			3,(C)10*sin(glfwGetTime())
+			1,1,
+			1,(C)2*cos(glfwGetTime())+ (C)2*sin(glfwGetTime())*1i
 			};
 		}
 		return;
@@ -120,8 +107,7 @@ int main() {
 	std::thread mobius_mover(move_mobius);
 
 	while (true) {
-		
-
+	
 		std::cin >> command;
 
 		if (command == "exit") {
