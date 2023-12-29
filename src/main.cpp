@@ -24,11 +24,6 @@ std::complex<double> to_complex(float a, float b) {
 	return ((double)a) + ((double)b)*1i;
 }
 
-
-
-
-
-
 //This is a small example program where I graph part of the imaginary of a mobius
 //transformation on a disk in the complex plane.
 class programWindow : public BaseViewWindow {
